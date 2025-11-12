@@ -12,18 +12,20 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const data = await login(username, password);
+      console.log("Login response:", data);
+  
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-
+  
       const role = data.user.role;
-      setMessage(`Welcome ${data.user.nama} (${role})`);
-
-      // Redirect sesuai role
+      console.log("User role:", role);
+  
       if (role === "admin") navigate("/dashboard/admin");
       else if (role === "manajer") navigate("/dashboard/manager");
       else if (role === "pembeli") navigate("/dashboard/buyer");
       else navigate("/");
     } catch (err) {
+      console.error(err);
       setMessage("Login failed: " + err.message);
     }
   }
