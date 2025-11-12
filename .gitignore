@@ -7,10 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Backend build (Maven)
+backend/target/
+
+# Frontend cache / build
+frontend/node_modules/
+frontend/package-lock.json
+.vite/
+
 node_modules
 dist
 dist-ssr
 *.local
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / editor temp files
+*.swp
+*.tmp
+*.bak
 
 # Editor directories and files
 .vscode/*
