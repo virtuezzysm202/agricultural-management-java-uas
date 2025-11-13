@@ -1,27 +1,19 @@
 package com.farmmanagement.middleware;
 
 import com.farmmanagement.util.JwtUtil;
-import static spark.Spark.*;
+
+import static spark.Spark.before;
+import static spark.Spark.halt;
 
 public class AuthMiddleware {
 
     public static void register() {
 
-        // CORS Middleware
-        before((req, res) -> {
-            res.header("Access-Control-Allow-Origin", "*");
-            res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-            res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        });
-
-        // OPTIONS (untuk preflight request React)
-        options("/*", (req, res) -> "OK");
-
-        // Middleware JWT + Role-based Auth
+        //  Middleware JWT + Role-based Auth
         before("/api/*", (req, res) -> {
             String path = req.pathInfo();
 
-            // Lewati login & register
+            // Lewati endpoint public (login & register)
             if (path.equals("/api/user/login") || path.equals("/api/user/register")) {
                 return;
             }
@@ -36,17 +28,25 @@ public class AuthMiddleware {
                 halt(401, "Invalid or expired token");
             }
 
-            // Role-based access control
+            // Ambil role dari token
             String role = JwtUtil.getRole(token);
 
-            if (path.startsWith("/api/admin") && !"admin".equals(role)) {
+            // Role-based access control
+            if (path.startsWith("/api/admin") && !"admin".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Admin only");
             }
-            if (path.startsWith("/api/manager") && !"manajer".equals(role)) {
+
+            if (path.startsWith("/api/manager") && !"manajer".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Manager only");
             }
-            if (path.startsWith("/api/pembeli") && !"pembeli".equals(role)) {
+
+            if (path.startsWith("/api/pembeli") && !"pembeli".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Buyer only");
+            }
+
+            //  Tambahkan agar admin tetap bisa akses semua endpoint
+            if ("admin".equalsIgnoreCase(role)) {
+                return; // admin superuser: bypass semua filter
             }
         });
     }

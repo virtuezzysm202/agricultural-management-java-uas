@@ -1,8 +1,9 @@
 package com.farmmanagement.repository;
 
+import org.sql2o.Connection;
+
 import com.farmmanagement.config.DatabaseConfig;
 import com.farmmanagement.model.User;
-import org.sql2o.Connection;
 
 public class UserRepository {
 
