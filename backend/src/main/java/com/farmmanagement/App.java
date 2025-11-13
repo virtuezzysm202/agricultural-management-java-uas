@@ -5,6 +5,7 @@ import org.sql2o.Connection;
 import com.farmmanagement.config.DatabaseConfig;
 import com.farmmanagement.controller.AdminController;
 import com.farmmanagement.controller.BuyerController;
+import com.farmmanagement.controller.LahanController;
 import com.farmmanagement.controller.ManagerController;
 import com.farmmanagement.controller.TanamanController;
 import com.farmmanagement.controller.UserController;
@@ -40,6 +41,7 @@ public class App {
         ManagerController.registerRoutes();
         BuyerController.registerRoutes();
         TanamanController.registerRoutes();
+        LahanController.registerRoutes();
 
         // Endpoint test
         get("/hello", (req, res) -> "Farm Management Backend Running ✅");

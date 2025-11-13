@@ -1,5 +1,6 @@
 package com.farmmanagement.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import com.farmmanagement.model.User;
@@ -9,10 +10,12 @@ import com.google.gson.Gson;
 
 import spark.Request;
 import spark.Response;
+import static spark.Spark.delete; // IMPORT DELETE
 import static spark.Spark.get;
 import static spark.Spark.halt;
 import static spark.Spark.path;
 import static spark.Spark.post;
+import static spark.Spark.put; // IMPORT PUT
 
 public class UserController {
 
@@ -28,10 +31,9 @@ public class UserController {
             // REGISTER
             post("/register", (req, res) -> {
                 User u = gson.fromJson(req.body(), User.class);
-                // Asumsi register juga menerima nama
                 boolean success = userService.register(u.getUsername(), u.getPassword(), u.getRole(), u.getNama()); 
                 res.type("application/json");
-                res.status(success ? 201 : 400); // Gunakan 201 Created untuk sukses
+                res.status(success ? 201 : 400); 
                 return success ? gson.toJson(Map.of("message", "User created")) 
                                : gson.toJson(Map.of("error", "Registration failed: Username may already exist"));
             });
@@ -43,17 +45,12 @@ public class UserController {
                 res.type("application/json");
 
                 if (logged != null) {
-                    // Tambahkan nama ke token jika perlu, atau pastikan JwtUtil dapat mengambil nama dari database
-                    // Contoh: Jika JwtUtil hanya menyimpan username dan role, Anda harus update util tersebut
                     String token = JwtUtil.generateToken(logged.getUsername(), logged.getRole());
-                    
-                    // Jangan kirim password kembali
                     logged.setPassword(null);
 
                     return gson.toJson(Map.of(
                         "message", "Login successful",
                         "token", token,
-                        // Kirim objek user lengkap (tanpa password)
                         "user", logged 
                     ));
                 } else {
@@ -61,42 +58,98 @@ public class UserController {
                     return gson.toJson(Map.of("error", "Invalid credentials"));
                 }
             });
+            
+            // ===============================================
+            // FUNGSI BARU UNTUK PENGELOLAAN USER OLEH ADMIN
+            // ===============================================
+            
+            // GET /api/user/manajer (untuk list manajer di Frontend)
+            get("/manajer", (req, res) -> {
+                res.type("application/json");
+                try {
+                    // Hanya ambil data yang diperlukan (tanpa password)
+                    List<User> list = userService.getUsersByRole("manajer"); 
+                    return gson.toJson(list); 
+                } catch (Exception e) {
+                    res.status(500);
+                    System.err.println("Error GET /api/user/manajer: " + e.getMessage());
+                    return gson.toJson(Map.of("error", "Gagal mengambil data manajer."));
+                }
+            });
+            
+            // PUT /api/user/:id (Update User/Pengawas)
+            put("/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    User updatedData = gson.fromJson(req.body(), User.class);
+                    
+                    // Set ID dari URL, bukan dari body
+                    updatedData.setId_user(id); 
+                    
+                    if (userService.updateUser(updatedData)) {
+                        res.status(200);
+                        return gson.toJson(Map.of("message", "User berhasil diperbarui"));
+                    } else {
+                        res.status(404);
+                        return gson.toJson(Map.of("error", "User tidak ditemukan atau gagal diperbarui."));
+                    }
+                } catch (NumberFormatException e) {
+                    res.status(400); return gson.toJson(Map.of("error", "ID user harus berupa angka."));
+                } catch (Exception e) {
+                    res.status(500); 
+                    System.err.println("Error PUT /api/user/:id: " + e.getMessage());
+                    return gson.toJson(Map.of("error", "Internal Server Error saat update user."));
+                }
+            });
+
+            // DELETE /api/user/:id (Hapus User/Pengawas)
+            delete("/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    if (userService.deleteUser(id)) {
+                        res.status(200);
+                        return gson.toJson(Map.of("message", "User berhasil dihapus"));
+                    } else {
+                        res.status(404);
+                        return gson.toJson(Map.of("error", "User tidak ditemukan."));
+                    }
+                } catch (NumberFormatException e) {
+                    res.status(400); return gson.toJson(Map.of("error", "ID user harus berupa angka."));
+                } catch (Exception e) {
+                    res.status(500); 
+                    System.err.println("Error DELETE /api/user/:id: " + e.getMessage());
+                    return gson.toJson(Map.of("error", "Internal Server Error saat hapus user."));
+                }
+            });
         });
     }
-
-    /**
-     * Menangani GET /api/user/current.
-     * Mengambil data user (username, role) dari Token JWT yang ada di header.
-     * Ini hanya bisa diakses setelah AuthMiddleware memverifikasi token.
-     */
     private String handleGetCurrentUser(Request req, Response res) {
+        // ... (kode tetap sama)
         res.type("application/json");
-        
-        // Ambil token yang sudah pasti ada (karena AuthMiddleware sudah memverifikasinya)
         String authHeader = req.headers("Authorization");
         
-        // Cek darurat (seharusnya tidak pernah terjadi jika AuthMiddleware bekerja)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             halt(401, "Token required");
         }
         String token = authHeader.substring(7);
 
         try {
-            // Ambil payload dari token
             String username = JwtUtil.getUsername(token);
-            String role = JwtUtil.getRole(token);
-            // Asumsi JwtUtil memiliki getNama() jika nama disimpan di payload
-            // Jika nama tidak disimpan di token, Anda perlu memanggil userService.findByUsername(username)
-            // Di sini kita asumsikan untuk efisiensi, hanya data di token yang diambil.
-            // Jika nama tidak di token:
-            // User userFromDb = userService.findByUsername(username); 
-            // return gson.toJson(userFromDb);
-
-            // Contoh response cepat (jika nama tidak di token, set null atau kosong)
+            // Panggil DB untuk data lengkap, termasuk nama
+            User userFromDb = userService.findByUsername(username); // ASUMSI: JwtUtil bisa mengambil ID user
+            
+            if (userFromDb != null) {
+                 userFromDb.setPassword(null); // Jangan kirim password
+                 return gson.toJson(userFromDb);
+            }
+            
+            // Fallback jika ID tidak ada di token
             return gson.toJson(Map.of(
                 "username", username, 
-                "role", role, 
-                "nama", "" // Isi dengan nama jika Anda bisa mengekstraknya dari token/DB
+                "role", JwtUtil.getRole(token), 
+                "nama", "" 
             ));
 
         } catch (Exception e) {
