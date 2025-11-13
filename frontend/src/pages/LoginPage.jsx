@@ -13,13 +13,13 @@ export default function LoginPage() {
     try {
       const data = await login(username, password);
       console.log("Login response:", data);
-  
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
-  
+
       const role = data.user.role;
       console.log("User role:", role);
-  
+
       if (role === "admin") navigate("/dashboard/admin");
       else if (role === "manajer") navigate("/dashboard/manager");
       else if (role === "pembeli") navigate("/dashboard/buyer");
@@ -32,7 +32,10 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-lg w-80">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-6 rounded-lg shadow-lg w-80"
+      >
         <h1 className="text-xl font-bold mb-4 text-center">Login</h1>
         <input
           type="text"
