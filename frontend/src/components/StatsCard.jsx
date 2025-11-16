@@ -55,7 +55,7 @@ export default function StatsCard({ title, value, change, up, icon }) {
           <span className="text-sm text-gray-500 dark:text-gray-400">
             {title}
           </span>
-          <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+          <h4 className="mt-2 font-bold text-title-sm" style={{ color: '#1f2937' }}>
             {value}
           </h4>
         </div>
