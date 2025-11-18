@@ -1,6 +1,7 @@
 package com.farmmanagement.service;
 
 import java.util.List;
+
 import com.farmmanagement.model.TanamanLahan;
 import com.farmmanagement.repository.TanamanLahanRepository;
 
@@ -13,6 +14,10 @@ public class TanamanLahanService {
 
     public TanamanLahan getTanamanLahanById(int id) {
         return repo.findById(id);
+    }
+
+    public boolean addTanamanLahan(TanamanLahan tanamanLahan) {
+        return repo.save(tanamanLahan);
     }
 
     public boolean updateTanamanLahan(TanamanLahan tanamanLahan) {

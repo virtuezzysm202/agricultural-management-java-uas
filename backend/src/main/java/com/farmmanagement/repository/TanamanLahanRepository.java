@@ -1,7 +1,9 @@
 package com.farmmanagement.repository;
 
 import java.util.List;
+
 import org.sql2o.Connection;
+
 import com.farmmanagement.config.DatabaseConfig;
 import com.farmmanagement.model.TanamanLahan;
 
@@ -33,6 +35,22 @@ public class TanamanLahanRepository {
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_tl", tanamanLahan.getId_tl())
+                             .addParameter("id_lahan", tanamanLahan.getId_lahan())
+                             .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
+                             .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
+                             .addParameter("status", tanamanLahan.getStatus())
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
+        }
+    }
+
+    // Tambah tanaman lahan baru
+    public boolean save(TanamanLahan tanamanLahan) {
+        String sql = "INSERT INTO tanaman_lahan (id_lahan, id_tanaman, tanggal_tanam, status) " +
+                     "VALUES (:id_lahan, :id_tanaman, :tanggal_tanam, :status)";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
                              .addParameter("id_lahan", tanamanLahan.getId_lahan())
                              .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
                              .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
