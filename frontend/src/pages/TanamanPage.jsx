@@ -7,7 +7,6 @@ import api from "../services/api";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
-// Register chart components
 ChartJS.register(ArcElement, Tooltip, Legend);
 // --- END CHART IMPORTS ---
 
@@ -22,7 +21,6 @@ export default function TanamanPage() {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Load data tanaman dari backend
   const fetchTanaman = async () => {
     try {
       const res = await api.get("/tanaman");
@@ -36,18 +34,15 @@ export default function TanamanPage() {
     fetchTanaman();
   }, []);
 
-  // Handle input form
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Submit tambah/update tanaman
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
       if (isEditing) {
-        // Hapus id_tanaman dari data saat PUT, kecuali API Anda membutuhkannya di body
         const dataToSubmit = { ...form };
         delete dataToSubmit.id_tanaman;
         await api.put(`/tanaman/${form.id_tanaman}`, dataToSubmit);
@@ -64,16 +59,13 @@ export default function TanamanPage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Gagal menyimpan data:", err);
-      // Tambahkan alert/message jika ada error dari backend
       alert("Gagal menyimpan data. Cek konsol untuk detail error.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Edit data
   const handleEdit = (data) => {
-    // Memastikan waktu_tanam diformat ke yyyy-MM-dd agar input type="date" berfungsi
     const formattedDate = data.waktu_tanam
       ? new Date(data.waktu_tanam).toISOString().split("T")[0]
       : "";
@@ -82,7 +74,6 @@ export default function TanamanPage() {
     setIsEditing(true);
   };
 
-  // Hapus data
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus tanaman ini?")) return;
     try {
@@ -93,7 +84,6 @@ export default function TanamanPage() {
     }
   };
 
-  // --- START CHART LOGIC ---
   const getChartData = () => {
     const jenisCount = tanaman.reduce((acc, t) => {
       const jenis = t.jenis || "Tidak Diketahui";
@@ -104,20 +94,19 @@ export default function TanamanPage() {
     const labels = Object.keys(jenisCount);
     const dataCounts = Object.values(jenisCount);
 
-    // Palet warna sederhana
     const backgroundColors = [
-      "#4CAF50", // Hijau
-      "#FF9800", // Oranye
-      "#2196F3", // Biru
-      "#F44336", // Merah
-      "#9C27B0", // Ungu
-      "#00BCD4", // Cyan
-      "#FFEB3B", // Kuning
-      "#795548", // Coklat
+      "#22c55e",
+      "#f97316",
+      "#0ea5e9",
+      "#f43f5e",
+      "#a855f7",
+      "#06b6d4",
+      "#eab308",
+      "#64748b",
     ];
 
     return {
-      labels: labels,
+      labels,
       datasets: [
         {
           label: "Jumlah Tanaman",
@@ -129,175 +118,209 @@ export default function TanamanPage() {
       ],
     };
   };
-  // --- END CHART LOGIC ---
 
   return (
-    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       <SidebarAdmin />
-      <div className="flex-1 xl:ml-[256px]">
+      <div className="flex-1 xl:ml-[260px]">
         <TopbarAdmin />
 
-        <main className="p-6 space-y-8">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-            🌱 Kelola Data Tanaman
-          </h2>
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
+          {/* HEADER */}
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2">
+              <span>🌱</span> Kelola Data Tanaman
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Tambahkan, ubah, dan pantau seluruh jenis tanaman yang terdaftar.
+            </p>
+          </div>
 
-          {/* LAYOUT GRID UNTUK FORM & CHART */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Kolom 1: 🧾 Form Tambah / Edit */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 h-fit">
-              <h3 className="text-xl font-medium mb-4 text-gray-800 dark:text-white">
-                {isEditing ? "Edit Data Tanaman" : "Tambah Tanaman Baru"}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          {/* FORM + CHART */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* FORM CARD */}
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/80 dark:border-gray-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.6)]">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80" />
+              <div className="pointer-events-none absolute inset-0 opacity-40">
+                <div className="absolute -top-16 right-0 h-32 w-32 rounded-full bg-emerald-500/15 blur-3xl" />
+                <div className="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-lime-400/10 blur-3xl" />
+              </div>
+
+              <div className="relative p-6 space-y-5">
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Nama Tanaman
-                  </label>
-                  <input
-                    type="text"
-                    name="nama_tanaman"
-                    value={form.nama_tanaman}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
+                    {isEditing ? "Edit Data Tanaman" : "Tambah Tanaman Baru"}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Isi informasi dasar tanaman untuk kebutuhan pendataan.
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Jenis
-                  </label>
-                  <input
-                    type="text"
-                    name="jenis"
-                    value={form.jenis}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Nama Tanaman
+                    </label>
+                    <input
+                      type="text"
+                      name="nama_tanaman"
+                      value={form.nama_tanaman}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      required
+                      placeholder="Contoh: Padi, Jagung, Brokoli..."
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Waktu Tanam
-                  </label>
-                  <input
-                    type="date"
-                    name="waktu_tanam"
-                    value={form.waktu_tanam}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Jenis
+                    </label>
+                    <input
+                      type="text"
+                      name="jenis"
+                      value={form.jenis}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      required
+                      placeholder="Contoh: Sayuran, Umbi Akar, Bunga..."
+                    />
+                  </div>
 
-                <div className="flex space-x-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {isEditing ? "Simpan Perubahan" : "Tambah Tanaman"}
-                  </button>
-                  {isEditing && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Waktu Tanam
+                    </label>
+                    <input
+                      type="date"
+                      name="waktu_tanam"
+                      value={form.waktu_tanam}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
                     <button
-                      type="button"
-                      onClick={() => {
-                        setForm({
-                          id_tanaman: null,
-                          nama_tanaman: "",
-                          jenis: "",
-                          waktu_tanam: "",
-                        });
-                        setIsEditing(false);
-                      }}
-                      className="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500"
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                     >
-                      Batal
+                      {isEditing ? "Simpan Perubahan" : "Tambah Tanaman"}
                     </button>
-                  )}
-                </div>
-              </form>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm({
+                            id_tanaman: null,
+                            nama_tanaman: "",
+                            jenis: "",
+                            waktu_tanam: "",
+                          });
+                          setIsEditing(false);
+                        }}
+                        className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
             </div>
 
-            {/* Kolom 2: 📊 Pie Chart */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col items-center justify-center">
-              <h3 className="text-xl font-medium mb-6 text-gray-800 dark:text-white">
-                Distribusi Jenis Tanaman
-              </h3>
-              <div className="w-full max-w-sm">
-                {tanaman.length > 0 ? (
-                  <Pie data={getChartData()} />
-                ) : (
-                  <p className="text-center text-gray-500 dark:text-gray-400">
-                    Data kosong, silakan tambah tanaman.
-                  </p>
-                )}
+            {/* CHART CARD */}
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/80 dark:border-gray-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.6)] flex flex-col items-center">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-400/80 via-emerald-300/80 to-lime-400/80" />
+              <div className="pointer-events-none absolute inset-0 opacity-40">
+                <div className="absolute -top-16 left-0 h-32 w-32 rounded-full bg-sky-500/15 blur-3xl" />
+                <div className="absolute -bottom-20 right-0 h-36 w-36 rounded-full bg-emerald-500/10 blur-3xl" />
+              </div>
+
+              <div className="relative w-full p-6 flex flex-col items-center">
+                <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50 mb-2">
+                  Distribusi Jenis Tanaman
+                </h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-6 text-center">
+                  Ringkasan komposisi tanaman berdasarkan kategori jenis.
+                </p>
+                <div className="w-full max-w-xs mx-auto">
+                  {tanaman.length > 0 ? (
+                    <Pie data={getChartData()} />
+                  ) : (
+                    <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                      Data masih kosong, silakan tambah tanaman terlebih dahulu.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-          {/* END LAYOUT GRID */}
 
-          {/* 📋 Tabel Tanaman */}
-          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <table className="min-w-full border-collapse">
-              <thead className="bg-green-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                <tr>
-                  <th className="px-4 py-2 border">ID</th>
-                  <th className="px-4 py-2 border">Nama Tanaman</th>
-                  <th className="px-4 py-2 border">Jenis</th>
-                  <th className="px-4 py-2 border">Waktu Tanam</th>
-                  <th className="px-4 py-2 border text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tanaman.map((t) => (
-                  <tr
-                    key={t.id_tanaman}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <td className="border px-4 py-2 text-center">
-                      {t.id_tanaman}
-                    </td>
-                    <td className="border px-4 py-2">{t.nama_tanaman}</td>
-                    <td className="border px-4 py-2">{t.jenis}</td>
-                    {/* Format tanggal untuk tampilan, jika perlu */}
-                    <td className="border px-4 py-2">
-                      {t.waktu_tanam
-                        ? new Date(t.waktu_tanam).toLocaleDateString("id-ID")
-                        : "-"}
-                    </td>
-                    <td className="border px-4 py-2 text-center">
-                      <button
-                        onClick={() => handleEdit(t)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t.id_tanaman)}
-                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                      >
-                        Hapus
-                      </button>
-                    </td>
+          {/* TABEL TANAMAN */}
+          <section className="space-y-3 mb-10">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
+              Tabel Data Tanaman
+            </h3>
+            <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID</th>
+                    <th className="px-4 py-3 text-left">Nama Tanaman</th>
+                    <th className="px-4 py-3 text-left">Jenis</th>
+                    <th className="px-4 py-3 text-left">Waktu Tanam</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
-                ))}
-                {tanaman.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="text-center py-4 text-gray-500 dark:text-gray-400"
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {tanaman.map((t) => (
+                    <tr
+                      key={t.id_tanaman}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      Tidak ada data tanaman
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                      <td className="px-4 py-3 text-sm">{t.id_tanaman}</td>
+                      <td className="px-4 py-3 text-sm">{t.nama_tanaman}</td>
+                      <td className="px-4 py-3 text-sm">{t.jenis}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {t.waktu_tanam
+                          ? new Date(t.waktu_tanam).toLocaleDateString("id-ID")
+                          : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center space-x-2">
+                        <button
+                          onClick={() => handleEdit(t)}
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(t.id_tanaman)}
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
+                        >
+                          Hapus
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {tanaman.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Tidak ada data tanaman.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </section>
         </main>
       </div>
     </div>
   );
 }
+
