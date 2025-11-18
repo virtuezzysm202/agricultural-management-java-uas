@@ -3,33 +3,35 @@ import SidebarAdmin from "../components/SidebarAdmin";
 import TopbarAdmin from "../components/TopbarAdmin";
 import StatsCard from "../components/StatsCard";
 import MonthlySalesChart from "../components/MonthlySalesChart";
-import api from "../services/api"; // axios instance
+import api from "../services/api";
 
-
+// Toolbar kecil di atas tabel
 function TableToolbar({ title, onRefresh }) {
   return (
     <div className="flex items-center justify-between mb-3">
       <h3 className="text-lg font-semibold">{title}</h3>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={onRefresh}
-          className="px-3 py-1 rounded-md border bg-white text-sm shadow-sm hover:bg-gray-50"
-        >
-          Refresh
-        </button>
-      </div>
+      <button
+        onClick={onRefresh}
+        className="px-3 py-1 rounded-md border bg-white dark:bg-gray-900 dark:border-gray-700 text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800"
+      >
+        Refresh
+      </button>
     </div>
   );
 }
 
+// Modal sederhana untuk edit data
 function SimpleModal({ open, onClose, title, children }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg">
+      <div className="w-full max-w-2xl rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-semibold">{title}</h4>
-          <button onClick={onClose} className="text-gray-500">
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
             Close
           </button>
         </div>
@@ -40,28 +42,31 @@ function SimpleModal({ open, onClose, title, children }) {
 }
 
 export default function DashboardAdmin() {
-  // ==== DATA STATES ====
-  const [harvests, setHarvests] = useState([]);   // hasil_panen
-  const [lahans, setLahans] = useState([]);       // tanaman_lahan
-  const [monitors, setMonitors] = useState([]);   // monitoring
+  // ======= STATE DATA =======
+  const [harvests, setHarvests] = useState([]); // hasil_panen
+  const [lahans, setLahans] = useState([]); // tanaman_lahan
+  const [monitors, setMonitors] = useState([]); // monitoring
   const [purchases, setPurchases] = useState([]); // pembelian
-  const [tanamans, setTanamans] = useState([]);   // tanaman
-  const [managers, setManagers] = useState([]);   // manager / pengawas
+  const [tanamans, setTanamans] = useState([]); // tanaman
+  const [managers, setManagers] = useState([]); // manajer
 
   // modal state
   const [editOpen, setEditOpen] = useState(false);
   const [editType, setEditType] = useState(null); // 'harvest'|'lahan'|'monitor'|'purchase'
   const [current, setCurrent] = useState(null);
 
-  // loading
+  // loading per tabel
   const [loading, setLoading] = useState({
     h: false,
     l: false,
     m: false,
     p: false,
+    t: false,
+    ma: false,
   });
 
-  // ==== FALLBACK DEMO DATA (kalau backend belum siap) ====
+  // ======= DEMO DATA FALLBACK =======
+
   const demoHarvests = [
     {
       id_hasil: 1,
@@ -146,11 +151,11 @@ export default function DashboardAdmin() {
   ];
 
   const demoManagers = [
-    { id_user: 2, nama: "Manager A", role: "MANAGER" },
-    { id_user: 3, nama: "Manager B", role: "MANAGER" },
+    { id: 1, nama: "Andi", status: "aktif" },
+    { id: 2, nama: "Budi", status: "aktif" },
   ];
 
-  // ==== FETCH FUNCTIONS ====
+  // ======= FETCH FUNCTIONS =======
 
   const loadHarvests = async () => {
     setLoading((s) => ({ ...s, h: true }));
@@ -168,9 +173,7 @@ export default function DashboardAdmin() {
   const loadLahans = async () => {
     setLoading((s) => ({ ...s, l: true }));
     try {
-      const res = await api
-        .get("/tanaman_lahan")
-        .catch(() => ({ data: null }));
+      const res = await api.get("/tanaman_lahan").catch(() => ({ data: null }));
       setLahans(res.data ?? demoLahans);
     } catch (err) {
       console.error(err);
@@ -207,38 +210,42 @@ export default function DashboardAdmin() {
   };
 
   const loadTanamans = async () => {
+    setLoading((s) => ({ ...s, t: true }));
     try {
       const res = await api.get("/tanaman").catch(() => ({ data: null }));
       setTanamans(res.data ?? demoTanamans);
     } catch (err) {
       console.error(err);
       setTanamans(demoTanamans);
+    } finally {
+      setLoading((s) => ({ ...s, t: false }));
     }
   };
 
   const loadManagers = async () => {
+    setLoading((s) => ({ ...s, ma: true }));
     try {
-      // sesuaikan dengan path di ManagerController, asumsi: /api/manager
       const res = await api.get("/manager").catch(() => ({ data: null }));
       setManagers(res.data ?? demoManagers);
     } catch (err) {
       console.error(err);
       setManagers(demoManagers);
+    } finally {
+      setLoading((s) => ({ ...s, ma: false }));
     }
   };
 
+  // initial load
   useEffect(() => {
-    // initial load
     loadHarvests();
     loadLahans();
     loadMonitors();
     loadPurchases();
     loadTanamans();
     loadManagers();
-    // tidak pakai lagi loadStats()/stats
   }, []);
 
-  // ==== EDIT / DELETE / SAVE HANDLERS ====
+  // ======= EDIT / DELETE HANDLERS =======
 
   const openEdit = (type, item) => {
     setEditType(type);
@@ -247,7 +254,7 @@ export default function DashboardAdmin() {
   };
 
   const handleDelete = async (type, id) => {
-    if (!confirm("Hapus data ini?")) return;
+    if (!window.confirm("Hapus data ini?")) return;
     try {
       const map = {
         harvest: "hasil_panen",
@@ -256,7 +263,6 @@ export default function DashboardAdmin() {
         purchase: "pembelian",
       };
       await api.delete(`/${map[type]}/${id}`).catch(() => null);
-
       if (type === "harvest") loadHarvests();
       if (type === "lahan") loadLahans();
       if (type === "monitor") loadMonitors();
@@ -309,7 +315,7 @@ export default function DashboardAdmin() {
   const toggleHarvestStatus = async (h) => {
     const newStatus =
       h.status === "Siap Dijual" ? "Menunggu Validasi" : "Siap Dijual";
-    if (!confirm(`Ubah status menjadi '${newStatus}' ?`)) return;
+    if (!window.confirm(`Ubah status menjadi '${newStatus}' ?`)) return;
     try {
       await api
         .put(`/hasil_panen/${h.id_hasil}`, { ...h, status: newStatus })
@@ -321,44 +327,48 @@ export default function DashboardAdmin() {
     }
   };
 
-  // hitung total panen (kg)
+  // ======= PERHITUNGAN STATS =======
+
+  const totalLahan = lahans.length;
+  const jenisTanaman = tanamans.length;
+  const manajerAktif = managers.length;
   const totalPanenKg = harvests.reduce(
     (sum, h) => sum + (h.kuantitas || 0),
     0
   );
 
-  // total revenue dari pembelian
   const totalRevenue = purchases.reduce(
     (sum, p) => sum + (p.total_harga || 0),
     0
   );
 
+  // ======= RENDER =======
   return (
-    <div className="min-h-screen xl:flex bg-gray-50">
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       <SidebarAdmin />
       <div className="flex-1 xl:ml-[256px]">
         <TopbarAdmin />
 
-        <main className="p-6">
-          {/* ==== STATS ROW ==== */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <main className="p-6 space-y-8">
+          {/* ======= STAT CARDS ======= */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
               title="Total Lahan"
-              value={lahans.length}
+              value={totalLahan}
               change="-"
               up={true}
               icon={<span>🏡</span>}
             />
             <StatsCard
               title="Jenis Tanaman"
-              value={tanamans.length}
+              value={jenisTanaman}
               change="-"
               up={true}
               icon={<span>🌱</span>}
             />
             <StatsCard
               title="Manajer Aktif"
-              value={managers.length}
+              value={manajerAktif}
               change="-"
               up={true}
               icon={<span>👨‍🌾</span>}
@@ -372,30 +382,31 @@ export default function DashboardAdmin() {
             />
           </div>
 
-          {/* ==== CHARTS + SUMMARY ==== */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* ======= CHART + SUMMARY ======= */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <MonthlySalesChart />
+              {/* Chart pakai data purchases biar nggak double fetch */}
+              <MonthlySalesChart data={purchases} fromBackend={false} />
             </div>
             <div>
-              <div className="rounded-2xl border border-gray-200 bg-white p-4">
+              <div className="rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 p-4 transition-colors">
                 <h3 className="font-semibold mb-2">Summary Penjualan</h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Total recent orders: {purchases.length}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Total revenue: Rp {totalRevenue}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ==== TABLE: HASIL PANEN ==== */}
-          <section className="mb-8">
+          {/* ======= TABEL: HASIL PANEN ======= */}
+          <section className="space-y-3">
             <TableToolbar title="Tabel Hasil Panen" onRefresh={loadHarvests} />
-            <div className="overflow-auto bg-white rounded-lg border">
-              <table className="min-w-full divide-y">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm">ID Hasil Panen</th>
                     <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
@@ -404,16 +415,17 @@ export default function DashboardAdmin() {
                     <th className="px-4 py-2 text-left text-sm">Tanggal</th>
                     <th className="px-4 py-2 text-right text-sm">Kuantitas</th>
                     <th className="px-4 py-2 text-left text-sm">Kualitas</th>
-                    <th className="px-4 py-2 text-right text-sm">
-                      Harga Satuan
-                    </th>
+                    <th className="px-4 py-2 text-right text-sm">Harga Satuan</th>
                     <th className="px-4 py-2 text-left text-sm">Status</th>
                     <th className="px-4 py-2 text-center text-sm">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(loading.h ? [] : harvests).map((h) => (
-                    <tr key={h.id_hasil} className="border-b last:border-b-0">
+                    <tr
+                      key={h.id_hasil}
+                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                    >
                       <td className="px-4 py-3 text-sm">{h.id_hasil}</td>
                       <td className="px-4 py-3 text-sm">{h.id_tanaman}</td>
                       <td className="px-4 py-3 text-sm">{h.id_lahan}</td>
@@ -428,38 +440,63 @@ export default function DashboardAdmin() {
                       </td>
                       <td className="px-4 py-3 text-sm">{h.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
+                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("harvest", h)}
-                          className="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
+                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
+                          "
                         >
                           Edit
                         </button>
+                        {/* TOGGLE STATUS */}
                         <button
                           onClick={() => toggleHarvestStatus(h)}
-                          className="text-sm px-2 py-1 bg-green-50 text-green-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-green-100 text-green-700 border-green-300 hover:bg-green-200
+                            dark:bg-green-500/20 dark:text-green-300 dark:border-green-400/40 dark:hover:bg-green-500/30
+                          "
                         >
                           Toggle Status
                         </button>
+                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("harvest", h.id_hasil)}
-                          className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
+                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
+                          "
                         >
                           Delete
                         </button>
                       </td>
                     </tr>
                   ))}
+                  {!loading.h && harvests.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Tidak ada data hasil panen.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* ==== TABLE: TANAMAN LAHAN ==== */}
-          <section className="mb-8">
+          {/* ======= TABEL: TANAMAN LAHAN ======= */}
+          <section className="space-y-3">
             <TableToolbar title="Tabel Tanaman Lahan" onRefresh={loadLahans} />
-            <div className="overflow-auto bg-white rounded-lg border">
-              <table className="min-w-full divide-y">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm">
                       ID Tanaman Lahan
@@ -473,39 +510,62 @@ export default function DashboardAdmin() {
                 </thead>
                 <tbody>
                   {(loading.l ? [] : lahans).map((l) => (
-                    <tr key={l.id_tl} className="border-b last:border-b-0">
+                    <tr
+                      key={l.id_tl}
+                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                    >
                       <td className="px-4 py-3 text-sm">{l.id_tl}</td>
                       <td className="px-4 py-3 text-sm">{l.id_lahan}</td>
                       <td className="px-4 py-3 text-sm">{l.id_tanaman}</td>
                       <td className="px-4 py-3 text-sm">{l.tanggal_tanam}</td>
                       <td className="px-4 py-3 text-sm">{l.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
+                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("lahan", l)}
-                          className="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
+                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
+                          "
                         >
                           Edit
                         </button>
+                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("lahan", l.id_tl)}
-                          className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
+                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
+                          "
                         >
                           Delete
                         </button>
                       </td>
                     </tr>
                   ))}
+                  {!loading.l && lahans.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Tidak ada data tanaman lahan.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* ==== TABLE: MONITORING ==== */}
-          <section className="mb-8">
+          {/* ======= TABEL: MONITORING ======= */}
+          <section className="space-y-3">
             <TableToolbar title="Tabel Monitoring" onRefresh={loadMonitors} />
-            <div className="overflow-auto bg-white rounded-lg border">
-              <table className="min-w-full divide-y">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
                   <tr>
                     <th className="px-4 py-2 text-left text-sm">ID Monitor</th>
                     <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
@@ -519,44 +579,69 @@ export default function DashboardAdmin() {
                 </thead>
                 <tbody>
                   {(loading.m ? [] : monitors).map((mo) => (
-                    <tr key={mo.id_monitor} className="border-b last:border-b-0">
+                    <tr
+                      key={mo.id_monitor}
+                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                    >
                       <td className="px-4 py-3 text-sm">{mo.id_monitor}</td>
                       <td className="px-4 py-3 text-sm">{mo.id_lahan}</td>
                       <td className="px-4 py-3 text-sm">{mo.suhu}</td>
                       <td className="px-4 py-3 text-sm">{mo.kelembaban}</td>
                       <td className="px-4 py-3 text-sm">{mo.tanggal}</td>
                       <td className="px-4 py-3 text-center space-x-2">
+                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("monitor", mo)}
-                          className="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
+                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
+                          "
                         >
                           Edit
                         </button>
+                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("monitor", mo.id_monitor)}
-                          className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
+                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
+                          "
                         >
                           Delete
                         </button>
                       </td>
                     </tr>
                   ))}
+                  {!loading.m && monitors.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Tidak ada data monitoring.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* ==== TABLE: PEMBELIAN ==== */}
-          <section className="mb-16">
+          {/* ======= TABEL: PEMBELIAN ======= */}
+          <section className="space-y-3 mb-16">
             <TableToolbar
               title="Tabel Pembelian (Recent Orders)"
               onRefresh={loadPurchases}
             />
-            <div className="overflow-auto bg-white rounded-lg border">
-              <table className="min-w-full divide-y">
-                <thead className="bg-gray-50 sticky top-0">
+            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID Pembelian</th>
+                    <th className="px-4 py-2 text-left text-sm">
+                      ID Pembelian
+                    </th>
                     <th className="px-4 py-2 text-left text-sm">ID Pembeli</th>
                     <th className="px-4 py-2 text-left text-sm">ID Hasil</th>
                     <th className="px-4 py-2 text-left text-sm">Tanggal</th>
@@ -571,7 +656,7 @@ export default function DashboardAdmin() {
                   {(loading.p ? [] : purchases).map((p) => (
                     <tr
                       key={p.id_pembelian}
-                      className="border-b last:border-b-0"
+                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
                     >
                       <td className="px-4 py-3 text-sm">{p.id_pembelian}</td>
                       <td className="px-4 py-3 text-sm">{p.id_pembeli}</td>
@@ -583,24 +668,44 @@ export default function DashboardAdmin() {
                       <td className="px-4 py-3 text-sm text-right">
                         Rp {p.total_harga}
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-center space-x-2">
+                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("purchase", p)}
-                          className="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
+                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
+                          "
                         >
                           Edit
                         </button>
+                        {/* DELETE */}
                         <button
                           onClick={() =>
                             handleDelete("purchase", p.id_pembelian)
                           }
-                          className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded"
+                          className="
+                            text-sm px-3 py-1 rounded-md border transition
+                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
+                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
+                          "
                         >
                           Delete
                         </button>
                       </td>
                     </tr>
                   ))}
+                  {!loading.p && purchases.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        Tidak ada data pembelian.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -615,14 +720,16 @@ export default function DashboardAdmin() {
         title={`Edit ${editType ?? ""}`}
       >
         {current && (
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-[60vh] overflow-auto pr-1">
             {Object.keys(current).map((k) => {
               if (k === "__meta") return null;
               return (
                 <div key={k} className="flex items-center gap-3">
-                  <label className="w-40 text-sm text-gray-600">{k}</label>
+                  <label className="w-40 text-sm text-gray-600 dark:text-gray-300">
+                    {k}
+                  </label>
                   <input
-                    className="flex-1 rounded border px-3 py-2"
+                    className="flex-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                     value={current[k] ?? ""}
                     onChange={(e) =>
                       setCurrent((c) => ({ ...c, [k]: e.target.value }))
@@ -635,13 +742,13 @@ export default function DashboardAdmin() {
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setEditOpen(false)}
-                className="px-4 py-2 rounded border"
+                className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded bg-blue-600 text-white"
+                className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
               >
                 Save
               </button>

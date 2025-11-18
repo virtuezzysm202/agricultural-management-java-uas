@@ -1,9 +1,8 @@
 // frontend/src/components/MonthlySalesChart.jsx
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
-import api from "../services/api"; // pastikan ini ada dan export default api
+import api from "../services/api";
 
-// helper: format bulan dari angka 0..11 ke label singkat
 const MONTH_LABELS = [
   "Jan",
   "Feb",
@@ -18,9 +17,30 @@ const MONTH_LABELS = [
   "Nov",
   "Des",
 ];
+
 export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
   const [seriesData, setSeriesData] = useState(new Array(12).fill(0)); // index 0 = Jan
   const [loading, setLoading] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // ====== Sinkron sama Tailwind dark mode (class "dark" di <html>) ======
+  useEffect(() => {
+    const updateDarkMode = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      setDarkMode(isDark);
+    };
+
+    updateDarkMode();
+
+    // Observe perubahan class di <html> (saat tombol dark mode diklik)
+    const observer = new MutationObserver(updateDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Convert purchases -> monthly totals (expects pembelian items with 'tanggal' and 'total_harga' or 'jumlah')
   const computeMonthlyFromPurchases = (purchases) => {
@@ -38,8 +58,8 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
   // If prop 'data' provided in aggregated form [{month:1,total:...}, ...]
   const computeFromProp = (propData) => {
     const totals = new Array(12).fill(0);
-    // Accept either aggregated or raw purchases
     if (!Array.isArray(propData)) return totals;
+
     if (propData.length > 0 && propData[0].month !== undefined) {
       // aggregated
       propData.forEach((r) => {
@@ -67,7 +87,6 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
         }
 
         if (!fromBackend) {
-          // no data, no backend -> demo
           const demo = [
             1200, 2100, 1800, 2500, 3100, 2800, 3300, 3000, 3400, 3600, 3900,
             4100,
@@ -77,14 +96,12 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
           return;
         }
 
-        // fetch from backend (/pembelian)
         const res = await api.get("/pembelian").catch(() => ({ data: null }));
         const purchases = res.data ?? [];
         const computed = computeMonthlyFromPurchases(purchases);
         if (mounted) setSeriesData(computed);
       } catch (err) {
         console.error("MonthlySalesChart load error:", err);
-        // fallback demo
         const demo = [
           1200, 2100, 1800, 2500, 3100, 2800, 3300, 3000, 3400, 3600, 3900,
           4100,
@@ -101,31 +118,52 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
     };
   }, [data, fromBackend]);
 
+  // ====== OPTIONS CHART ======
   const chartOptions = {
     chart: {
       id: "monthly-sales",
       toolbar: { show: false },
       zoom: { enabled: false },
       animations: { enabled: true },
+      background: "transparent",
+      foreColor: darkMode ? "#e5e7eb" : "#374151", // text di axis & tooltip
     },
     stroke: { curve: "smooth", width: 3 },
-    grid: { borderColor: "#eee" },
+    grid: {
+      borderColor: darkMode ? "#374151" : "#e5e7eb",
+    },
     xaxis: {
       categories: MONTH_LABELS,
-      labels: { style: { colors: "#6b7280" } },
+      labels: {
+        style: {
+          colors: darkMode ? "#9ca3af" : "#6b7280",
+          fontSize: "12px",
+        },
+      },
+      axisBorder: {
+        color: darkMode ? "#4b5563" : "#e5e7eb",
+      },
+      axisTicks: {
+        color: darkMode ? "#4b5563" : "#e5e7eb",
+      },
     },
     yaxis: {
       labels: {
         formatter: (val) => String(Math.round(val)),
-        style: { colors: "#6b7280" },
+        style: {
+          colors: darkMode ? "#9ca3af" : "#6b7280",
+          fontSize: "12px",
+        },
       },
     },
     dataLabels: { enabled: false },
-    tooltip: { theme: "light" },
+    tooltip: {
+      theme: darkMode ? "dark" : "light",
+    },
     fill: {
       type: "gradient",
       gradient: {
-        shade: "light",
+        shade: darkMode ? "dark" : "light",
         gradientToColors: ["#16a34a"],
         shadeIntensity: 1,
         type: "vertical",
@@ -138,11 +176,15 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
 
   const chartSeries = [{ name: "Total Penjualan", data: seriesData }];
 
+  const totalTahunIni = seriesData.reduce((s, v) => s + v, 0);
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 py-4 sm:px-6">
+    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 px-4 py-4 sm:px-6 transition-colors">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-800">Monthly Sales</h3>
-        <div className="text-sm text-gray-500">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          Monthly Sales
+        </h3>
+        <div className="text-sm text-gray-500 dark:text-gray-400">
           {loading ? "Loading..." : "Last 12 months"}
         </div>
       </div>
@@ -156,10 +198,10 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
         />
       </div>
 
-      <div className="mt-3 text-sm text-gray-500">
+      <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
         Total tahun ini:{" "}
-        <span className="font-semibold text-gray-800">
-          {seriesData.reduce((s, v) => s + v, 0)}
+        <span className="font-semibold text-gray-800 dark:text-gray-100">
+          {totalTahunIni}
         </span>
       </div>
     </div>

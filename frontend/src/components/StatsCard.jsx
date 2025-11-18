@@ -4,14 +4,7 @@ import React from "react";
 const ArrowIcon = ({ up }) => {
   if (up) {
     return (
-      <svg
-        className="fill-current"
-        width="1em"
-        height="1em"
-        viewBox="0 0 13 12"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg className="fill-current" width="1em" height="1em" viewBox="0 0 13 12" fill="none">
         <path
           fillRule="evenodd"
           clipRule="evenodd"
@@ -22,14 +15,7 @@ const ArrowIcon = ({ up }) => {
     );
   }
   return (
-    <svg
-      className="fill-current"
-      width="1em"
-      height="1em"
-      viewBox="0 0 12 12"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg className="fill-current" width="1em" height="1em" viewBox="0 0 12 12" fill="none">
       <path
         fillRule="evenodd"
         clipRule="evenodd"
@@ -46,22 +32,20 @@ export default function StatsCard({ title, value, change, up, icon }) {
     : "bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-500";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6 transition-colors">
       <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
         {icon}
       </div>
+
       <div className="flex items-end justify-between mt-5">
         <div>
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            {title}
-          </span>
-          <h4 className="mt-2 font-bold text-title-sm" style={{ color: '#1f2937' }}>
+          <span className="text-sm text-gray-500 dark:text-gray-400">{title}</span>
+          <h4 className="mt-2 font-bold text-title-sm text-gray-900 dark:text-gray-100">
             {value}
           </h4>
         </div>
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 justify-center gap-1 rounded-full font-medium text-sm ${changeColor}`}
-        >
+
+        <span className={`inline-flex items-center px-2.5 py-0.5 gap-1 rounded-full text-sm font-medium ${changeColor}`}>
           <ArrowIcon up={up} />
           {change}
         </span>
