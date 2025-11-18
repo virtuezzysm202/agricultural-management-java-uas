@@ -3,16 +3,8 @@ import SidebarAdmin from "../components/SidebarAdmin";
 import TopbarAdmin from "../components/TopbarAdmin";
 import StatsCard from "../components/StatsCard";
 import MonthlySalesChart from "../components/MonthlySalesChart";
-import api from "../services/api"; // axios instance (see snippet below if belum ada)
+import api from "../services/api"; // axios instance
 
-/*
-  DashboardAdmin:
-  - Menampilkan statistik ringkas
-  - Menampilkan grafik monthly sales (komponen MonthlySalesChart)
-  - Tabel: hasil_panen, tanaman_lahan, monitoring, pembelian
-  - Edit & Delete sederhana via modal dan konfirmasi
-  - Refresh setiap tabel
-*/
 
 function TableToolbar({ title, onRefresh }) {
   return (
@@ -48,18 +40,13 @@ function SimpleModal({ open, onClose, title, children }) {
 }
 
 export default function DashboardAdmin() {
-  // data states
-  const [stats, setStats] = useState({
-    totalLahan: 0,
-    jenisTanaman: 0,
-    manajerAktif: 0,
-    totalPanenKg: 0,
-  });
-
-  const [harvests, setHarvests] = useState([]); // hasil_panen
-  const [lahans, setLahans] = useState([]);
-  const [monitors, setMonitors] = useState([]);
-  const [purchases, setPurchases] = useState([]);
+  // ==== DATA STATES ====
+  const [harvests, setHarvests] = useState([]);   // hasil_panen
+  const [lahans, setLahans] = useState([]);       // tanaman_lahan
+  const [monitors, setMonitors] = useState([]);   // monitoring
+  const [purchases, setPurchases] = useState([]); // pembelian
+  const [tanamans, setTanamans] = useState([]);   // tanaman
+  const [managers, setManagers] = useState([]);   // manager / pengawas
 
   // modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -74,163 +61,7 @@ export default function DashboardAdmin() {
     p: false,
   });
 
-  // fetch funcs
-  const loadStats = async () => {
-    try {
-      // Example: replace with real endpoint /api/dashboard or compute from queries
-      const res = await api.get("/dashboard/summary").catch(() => null);
-      if (res && res.data) setStats(res.data);
-      // fallback simple compute after loading harvests etc (done in useEffect)
-    } catch (err) {
-      console.error("loadStats", err);
-    }
-  };
-
-  const loadHarvests = async () => {
-    setLoading((s) => ({ ...s, h: true }));
-    try {
-      const res = await api.get("/hasil_panen").catch(() => ({ data: null }));
-      setHarvests(res.data ?? demoHarvests);
-    } catch (err) {
-      console.error(err);
-      setHarvests(demoHarvests);
-    } finally {
-      setLoading((s) => ({ ...s, h: false }));
-    }
-  };
-
-  const loadLahans = async () => {
-    setLoading((s) => ({ ...s, l: true }));
-    try {
-      const res = await api.get("/tanaman_lahan").catch(() => ({ data: null }));
-      setLahans(res.data ?? demoLahans);
-    } catch (err) {
-      console.error(err);
-      setLahans(demoLahans);
-    } finally {
-      setLoading((s) => ({ ...s, l: false }));
-    }
-  };
-
-  const loadMonitors = async () => {
-    setLoading((s) => ({ ...s, m: true }));
-    try {
-      const res = await api.get("/monitoring").catch(() => ({ data: null }));
-      setMonitors(res.data ?? demoMonitors);
-    } catch (err) {
-      console.error(err);
-      setMonitors(demoMonitors);
-    } finally {
-      setLoading((s) => ({ ...s, m: false }));
-    }
-  };
-
-  const loadPurchases = async () => {
-    setLoading((s) => ({ ...s, p: true }));
-    try {
-      const res = await api.get("/pembelian").catch(() => ({ data: null }));
-      setPurchases(res.data ?? demoPurchases);
-    } catch (err) {
-      console.error(err);
-      setPurchases(demoPurchases);
-    } finally {
-      setLoading((s) => ({ ...s, p: false }));
-    }
-  };
-
-  useEffect(() => {
-    // initial load
-    loadHarvests();
-    loadLahans();
-    loadMonitors();
-    loadPurchases();
-    loadStats();
-  }, []);
-
-  // EDIT handlers
-  const openEdit = (type, item) => {
-    setEditType(type);
-    setCurrent({ ...item });
-    setEditOpen(true);
-  };
-
-  const handleDelete = async (type, id) => {
-    if (!confirm("Hapus data ini?")) return;
-    try {
-      // map type to endpoint
-      const map = {
-        harvest: "hasil_panen",
-        lahan: "tanaman_lahan",
-        monitor: "monitoring",
-        purchase: "pembelian",
-      };
-      await api.delete(`/${map[type]}/${id}`).catch(() => null);
-      // refresh
-      if (type === "harvest") loadHarvests();
-      if (type === "lahan") loadLahans();
-      if (type === "monitor") loadMonitors();
-      if (type === "purchase") loadPurchases();
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menghapus (jika backend belum tersedia, hapus demo manual)");
-    }
-  };
-
-  const handleSave = async () => {
-    // save current according to editType
-    try {
-      const map = {
-        harvest: "hasil_panen",
-        lahan: "tanaman_lahan",
-        monitor: "monitoring",
-        purchase: "pembelian",
-      };
-      if (!editType || !current) return;
-      // if current has id -> PUT else POST
-      const idField =
-        editType === "harvest"
-          ? "id_hasil"
-          : editType === "lahan"
-          ? "id_tl"
-          : editType === "monitor"
-          ? "id_monitor"
-          : "id_pembelian";
-      if (current[idField]) {
-        await api
-          .put(`/${map[editType]}/${current[idField]}`, current)
-          .catch(() => null);
-      } else {
-        await api.post(`/${map[editType]}`, current).catch(() => null);
-      }
-      // refresh
-      if (editType === "harvest") loadHarvests();
-      if (editType === "lahan") loadLahans();
-      if (editType === "monitor") loadMonitors();
-      if (editType === "purchase") loadPurchases();
-      setEditOpen(false);
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menyimpan (cek koneksi backend)");
-    }
-  };
-
-  // small helper to toggle status for harvest -> 'Siap Dijual' or others
-  const toggleHarvestStatus = async (h) => {
-    const newStatus =
-      h.status === "Siap Dijual" ? "Menunggu Validasi" : "Siap Dijual";
-    if (!confirm(`Ubah status menjadi '${newStatus}' ?`)) return;
-    try {
-      await api
-        .put(`/hasil_panen/${h.id_hasil}`, { ...h, status: newStatus })
-        .catch(() => null);
-      loadHarvests();
-    } catch (err) {
-      console.error(err);
-      alert("Gagal mengubah status");
-    }
-  };
-
-  // demo fallback data (dipakai bila backend tidak tersedia)
+  // ==== FALLBACK DEMO DATA (kalau backend belum siap) ====
   const demoHarvests = [
     {
       id_hasil: 1,
@@ -309,6 +140,199 @@ export default function DashboardAdmin() {
     },
   ];
 
+  const demoTanamans = [
+    { id_tanaman: 1, nama_tanaman: "Padi" },
+    { id_tanaman: 2, nama_tanaman: "Jagung" },
+  ];
+
+  const demoManagers = [
+    { id_user: 2, nama: "Manager A", role: "MANAGER" },
+    { id_user: 3, nama: "Manager B", role: "MANAGER" },
+  ];
+
+  // ==== FETCH FUNCTIONS ====
+
+  const loadHarvests = async () => {
+    setLoading((s) => ({ ...s, h: true }));
+    try {
+      const res = await api.get("/hasil_panen").catch(() => ({ data: null }));
+      setHarvests(res.data ?? demoHarvests);
+    } catch (err) {
+      console.error(err);
+      setHarvests(demoHarvests);
+    } finally {
+      setLoading((s) => ({ ...s, h: false }));
+    }
+  };
+
+  const loadLahans = async () => {
+    setLoading((s) => ({ ...s, l: true }));
+    try {
+      const res = await api
+        .get("/tanaman_lahan")
+        .catch(() => ({ data: null }));
+      setLahans(res.data ?? demoLahans);
+    } catch (err) {
+      console.error(err);
+      setLahans(demoLahans);
+    } finally {
+      setLoading((s) => ({ ...s, l: false }));
+    }
+  };
+
+  const loadMonitors = async () => {
+    setLoading((s) => ({ ...s, m: true }));
+    try {
+      const res = await api.get("/monitoring").catch(() => ({ data: null }));
+      setMonitors(res.data ?? demoMonitors);
+    } catch (err) {
+      console.error(err);
+      setMonitors(demoMonitors);
+    } finally {
+      setLoading((s) => ({ ...s, m: false }));
+    }
+  };
+
+  const loadPurchases = async () => {
+    setLoading((s) => ({ ...s, p: true }));
+    try {
+      const res = await api.get("/pembelian").catch(() => ({ data: null }));
+      setPurchases(res.data ?? demoPurchases);
+    } catch (err) {
+      console.error(err);
+      setPurchases(demoPurchases);
+    } finally {
+      setLoading((s) => ({ ...s, p: false }));
+    }
+  };
+
+  const loadTanamans = async () => {
+    try {
+      const res = await api.get("/tanaman").catch(() => ({ data: null }));
+      setTanamans(res.data ?? demoTanamans);
+    } catch (err) {
+      console.error(err);
+      setTanamans(demoTanamans);
+    }
+  };
+
+  const loadManagers = async () => {
+    try {
+      // sesuaikan dengan path di ManagerController, asumsi: /api/manager
+      const res = await api.get("/manager").catch(() => ({ data: null }));
+      setManagers(res.data ?? demoManagers);
+    } catch (err) {
+      console.error(err);
+      setManagers(demoManagers);
+    }
+  };
+
+  useEffect(() => {
+    // initial load
+    loadHarvests();
+    loadLahans();
+    loadMonitors();
+    loadPurchases();
+    loadTanamans();
+    loadManagers();
+    // tidak pakai lagi loadStats()/stats
+  }, []);
+
+  // ==== EDIT / DELETE / SAVE HANDLERS ====
+
+  const openEdit = (type, item) => {
+    setEditType(type);
+    setCurrent({ ...item });
+    setEditOpen(true);
+  };
+
+  const handleDelete = async (type, id) => {
+    if (!confirm("Hapus data ini?")) return;
+    try {
+      const map = {
+        harvest: "hasil_panen",
+        lahan: "tanaman_lahan",
+        monitor: "monitoring",
+        purchase: "pembelian",
+      };
+      await api.delete(`/${map[type]}/${id}`).catch(() => null);
+
+      if (type === "harvest") loadHarvests();
+      if (type === "lahan") loadLahans();
+      if (type === "monitor") loadMonitors();
+      if (type === "purchase") loadPurchases();
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menghapus (cek backend)");
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      const map = {
+        harvest: "hasil_panen",
+        lahan: "tanaman_lahan",
+        monitor: "monitoring",
+        purchase: "pembelian",
+      };
+      if (!editType || !current) return;
+
+      const idField =
+        editType === "harvest"
+          ? "id_hasil"
+          : editType === "lahan"
+          ? "id_tl"
+          : editType === "monitor"
+          ? "id_monitor"
+          : "id_pembelian";
+
+      if (current[idField]) {
+        await api
+          .put(`/${map[editType]}/${current[idField]}`, current)
+          .catch(() => null);
+      } else {
+        await api.post(`/${map[editType]}`, current).catch(() => null);
+      }
+
+      if (editType === "harvest") loadHarvests();
+      if (editType === "lahan") loadLahans();
+      if (editType === "monitor") loadMonitors();
+      if (editType === "purchase") loadPurchases();
+
+      setEditOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal menyimpan (cek backend)");
+    }
+  };
+
+  const toggleHarvestStatus = async (h) => {
+    const newStatus =
+      h.status === "Siap Dijual" ? "Menunggu Validasi" : "Siap Dijual";
+    if (!confirm(`Ubah status menjadi '${newStatus}' ?`)) return;
+    try {
+      await api
+        .put(`/hasil_panen/${h.id_hasil}`, { ...h, status: newStatus })
+        .catch(() => null);
+      loadHarvests();
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengubah status");
+    }
+  };
+
+  // hitung total panen (kg)
+  const totalPanenKg = harvests.reduce(
+    (sum, h) => sum + (h.kuantitas || 0),
+    0
+  );
+
+  // total revenue dari pembelian
+  const totalRevenue = purchases.reduce(
+    (sum, p) => sum + (p.total_harga || 0),
+    0
+  );
+
   return (
     <div className="min-h-screen xl:flex bg-gray-50">
       <SidebarAdmin />
@@ -316,7 +340,7 @@ export default function DashboardAdmin() {
         <TopbarAdmin />
 
         <main className="p-6">
-          {/* Stats row */}
+          {/* ==== STATS ROW ==== */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <StatsCard
               title="Total Lahan"
@@ -327,51 +351,46 @@ export default function DashboardAdmin() {
             />
             <StatsCard
               title="Jenis Tanaman"
-              value={stats.jenisTanaman || "—"}
+              value={tanamans.length}
               change="-"
               up={true}
               icon={<span>🌱</span>}
             />
             <StatsCard
               title="Manajer Aktif"
-              value={stats.manajerAktif || "—"}
+              value={managers.length}
               change="-"
               up={true}
               icon={<span>👨‍🌾</span>}
             />
             <StatsCard
               title="Total Panen (kg)"
-              value={
-                stats.totalPanenKg ||
-                harvests.reduce((s, h) => s + (h.kuantitas || 0), 0)
-              }
+              value={totalPanenKg}
               change="-"
               up={true}
               icon={<span>📦</span>}
             />
           </div>
 
-          {/* Charts + Left col */}
+          {/* ==== CHARTS + SUMMARY ==== */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2">
               <MonthlySalesChart />
             </div>
             <div>
-              {/* MonthlyTargetCard could go here if needed */}
               <div className="rounded-2xl border border-gray-200 bg-white p-4">
                 <h3 className="font-semibold mb-2">Summary Penjualan</h3>
                 <p className="text-sm text-gray-500">
                   Total recent orders: {purchases.length}
                 </p>
                 <p className="text-sm text-gray-500">
-                  Total revenue: Rp{" "}
-                  {purchases.reduce((s, p) => s + (p.total_harga || 0), 0)}
+                  Total revenue: Rp {totalRevenue}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Tables: Hasil Panen */}
+          {/* ==== TABLE: HASIL PANEN ==== */}
           <section className="mb-8">
             <TableToolbar title="Tabel Hasil Panen" onRefresh={loadHarvests} />
             <div className="overflow-auto bg-white rounded-lg border">
@@ -435,14 +454,16 @@ export default function DashboardAdmin() {
             </div>
           </section>
 
-          {/* Tables: Tanaman Lahan */}
+          {/* ==== TABLE: TANAMAN LAHAN ==== */}
           <section className="mb-8">
             <TableToolbar title="Tabel Tanaman Lahan" onRefresh={loadLahans} />
             <div className="overflow-auto bg-white rounded-lg border">
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID Tanaman Lahan</th>
+                    <th className="px-4 py-2 text-left text-sm">
+                      ID Tanaman Lahan
+                    </th>
                     <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
                     <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
                     <th className="px-4 py-2 text-left text-sm">Tanggal</th>
@@ -479,7 +500,7 @@ export default function DashboardAdmin() {
             </div>
           </section>
 
-          {/* Tables: Monitoring */}
+          {/* ==== TABLE: MONITORING ==== */}
           <section className="mb-8">
             <TableToolbar title="Tabel Monitoring" onRefresh={loadMonitors} />
             <div className="overflow-auto bg-white rounded-lg border">
@@ -498,10 +519,7 @@ export default function DashboardAdmin() {
                 </thead>
                 <tbody>
                   {(loading.m ? [] : monitors).map((mo) => (
-                    <tr
-                      key={mo.id_monitor}
-                      className="border-b last:border-b-0"
-                    >
+                    <tr key={mo.id_monitor} className="border-b last:border-b-0">
                       <td className="px-4 py-3 text-sm">{mo.id_monitor}</td>
                       <td className="px-4 py-3 text-sm">{mo.id_lahan}</td>
                       <td className="px-4 py-3 text-sm">{mo.suhu}</td>
@@ -528,7 +546,7 @@ export default function DashboardAdmin() {
             </div>
           </section>
 
-          {/* Tables: Pembelian */}
+          {/* ==== TABLE: PEMBELIAN ==== */}
           <section className="mb-16">
             <TableToolbar
               title="Tabel Pembelian (Recent Orders)"
@@ -538,9 +556,7 @@ export default function DashboardAdmin() {
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm">
-                      ID Pembelian
-                    </th>
+                    <th className="px-4 py-2 text-left text-sm">ID Pembelian</th>
                     <th className="px-4 py-2 text-left text-sm">ID Pembeli</th>
                     <th className="px-4 py-2 text-left text-sm">ID Hasil</th>
                     <th className="px-4 py-2 text-left text-sm">Tanggal</th>
@@ -601,7 +617,6 @@ export default function DashboardAdmin() {
         {current && (
           <div className="space-y-3">
             {Object.keys(current).map((k) => {
-              // skip internal or readonly keys if you want (example)
               if (k === "__meta") return null;
               return (
                 <div key={k} className="flex items-center gap-3">
