@@ -1,4 +1,3 @@
-// frontend/src/components/MonthlySalesChart.jsx
 import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
 import api from "../services/api";
@@ -19,11 +18,11 @@ const MONTH_LABELS = [
 ];
 
 export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
-  const [seriesData, setSeriesData] = useState(new Array(12).fill(0)); // index 0 = Jan
+  const [seriesData, setSeriesData] = useState(new Array(12).fill(0));
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  // ====== Sinkron sama Tailwind dark mode (class "dark" di <html>) ======
+  // Sinkron sama Tailwind dark mode
   useEffect(() => {
     const updateDarkMode = () => {
       const isDark = document.documentElement.classList.contains("dark");
@@ -32,7 +31,6 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
 
     updateDarkMode();
 
-    // Observe perubahan class di <html> (saat tombol dark mode diklik)
     const observer = new MutationObserver(updateDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -42,32 +40,29 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Convert purchases -> monthly totals (expects pembelian items with 'tanggal' and 'total_harga' or 'jumlah')
   const computeMonthlyFromPurchases = (purchases) => {
     const totals = new Array(12).fill(0);
     purchases.forEach((p) => {
       const t = p.tanggal ? new Date(p.tanggal) : null;
-      const monthIdx = t ? t.getMonth() : null; // 0..11
+      const monthIdx = t ? t.getMonth() : null;
       const value = p.total_harga ?? p.jumlah ?? 0;
-      if (monthIdx !== null && monthIdx >= 0 && monthIdx <= 11)
+      if (monthIdx !== null && monthIdx >= 0 && monthIdx <= 11) {
         totals[monthIdx] += Number(value || 0);
+      }
     });
     return totals;
   };
 
-  // If prop 'data' provided in aggregated form [{month:1,total:...}, ...]
   const computeFromProp = (propData) => {
     const totals = new Array(12).fill(0);
     if (!Array.isArray(propData)) return totals;
 
     if (propData.length > 0 && propData[0].month !== undefined) {
-      // aggregated
       propData.forEach((r) => {
         const idx = Number(r.month) - 1;
         if (idx >= 0 && idx < 12) totals[idx] = Number(r.total ?? 0);
       });
     } else {
-      // assume raw purchases array (with tanggal, total_harga)
       return computeMonthlyFromPurchases(propData);
     }
     return totals;
@@ -118,7 +113,11 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
     };
   }, [data, fromBackend]);
 
-  // ====== OPTIONS CHART ======
+  // Info bulan dengan nilai tertinggi
+  const maxVal = Math.max(...seriesData);
+  const maxIndex = seriesData.findIndex((v) => v === maxVal);
+  const peakMonth = maxVal > 0 && maxIndex >= 0 ? MONTH_LABELS[maxIndex] : "-";
+
   const chartOptions = {
     chart: {
       id: "monthly-sales",
@@ -126,18 +125,20 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
       zoom: { enabled: false },
       animations: { enabled: true },
       background: "transparent",
-      foreColor: darkMode ? "#e5e7eb" : "#374151", // text di axis & tooltip
+      foreColor: darkMode ? "#e5e7eb" : "#374151",
     },
     stroke: { curve: "smooth", width: 3 },
     grid: {
       borderColor: darkMode ? "#374151" : "#e5e7eb",
+      strokeDashArray: 4,
+      padding: { left: 8, right: 12, bottom: 6 },
     },
     xaxis: {
       categories: MONTH_LABELS,
       labels: {
         style: {
           colors: darkMode ? "#9ca3af" : "#6b7280",
-          fontSize: "12px",
+          fontSize: "11px",
         },
       },
       axisBorder: {
@@ -152,13 +153,16 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
         formatter: (val) => String(Math.round(val)),
         style: {
           colors: darkMode ? "#9ca3af" : "#6b7280",
-          fontSize: "12px",
+          fontSize: "11px",
         },
       },
     },
     dataLabels: { enabled: false },
     tooltip: {
       theme: darkMode ? "dark" : "light",
+      y: {
+        formatter: (val) => `Rp ${val.toLocaleString("id-ID")}`,
+      },
     },
     fill: {
       type: "gradient",
@@ -168,7 +172,8 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
         shadeIntensity: 1,
         type: "vertical",
         opacityFrom: 0.6,
-        opacityTo: 0.1,
+        opacityTo: 0.08,
+        stops: [0, 40, 100],
       },
     },
     colors: ["#16a34a"],
@@ -176,20 +181,34 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
 
   const chartSeries = [{ name: "Total Penjualan", data: seriesData }];
 
-  const totalTahunIni = seriesData.reduce((s, v) => s + v, 0);
-
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 px-4 py-4 sm:px-6 transition-colors">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-          Monthly Sales
-        </h3>
-        <div className="text-sm text-gray-500 dark:text-gray-400">
-          {loading ? "Loading..." : "Last 12 months"}
+    <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/80 dark:border-gray-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.6)] px-4 py-4 sm:px-6 sm:py-5 transition-colors">
+      {/* accent line di atas */}
+      <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80" />
+
+      {/* glow halus */}
+      <div className="pointer-events-none absolute inset-0 opacity-40">
+        <div className="absolute -top-20 right-0 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
+        <div className="absolute -bottom-16 left-0 h-36 w-36 rounded-full bg-lime-400/10 blur-3xl" />
+      </div>
+
+      <div className="relative mb-4 flex items-center justify-between gap-3">
+        <div className="space-y-1">
+          {/* judul dibikin lebih gede dikit */}
+          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
+            Monthly Sales
+          </h3>
+          <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+            Grafik penjualan bulanan untuk 12 bulan terakhir.
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 rounded-full border border-gray-200/80 bg-white/80 px-3 py-1 text-[11px] md:text-xs text-gray-600 shadow-sm dark:border-gray-700 dark:bg-gray-900/80 dark:text-gray-300">
+          <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+          {loading ? "Loading data..." : "Last 12 months · Live"}
         </div>
       </div>
 
-      <div className="w-full h-[220px]">
+      <div className="relative w-full h-[220px]">
         <Chart
           options={chartOptions}
           series={chartSeries}
@@ -198,10 +217,14 @@ export const MonthlySalesChart = ({ data = null, fromBackend = true }) => {
         />
       </div>
 
-      <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-        Total tahun ini:{" "}
-        <span className="font-semibold text-gray-800 dark:text-gray-100">
-          {totalTahunIni}
+      <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 text-xs md:text-sm text-gray-500 dark:text-gray-400">
+        <span>
+          Bulan tertinggi:{" "}
+          <span className="font-semibold text-gray-800 dark:text-gray-100">
+            {peakMonth === "-"
+              ? "-"
+              : `${peakMonth} (Rp ${maxVal.toLocaleString("id-ID")})`}
+          </span>
         </span>
       </div>
     </div>

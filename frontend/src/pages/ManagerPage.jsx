@@ -9,19 +9,28 @@ export default function ManagerPage() {
     id_user: null,
     username: "",
     nama: "",
-    password: "", // Hanya diisi saat CREATE atau ganti password
-    role: "manajer", // Default role
+    password: "",
+    role: "manajer",
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Endpoint yang diubah
   const ENDPOINT = "/user/manajer";
-  const USER_ENDPOINT = "/user"; // Endpoint umum untuk PUT/DELETE
+  const USER_ENDPOINT = "/user";
+
+  const formatRole = (role) => {
+    if (!role) return "-";
+    const map = {
+      admin: "Admin",
+      manajer: "Manajer",
+      pembeli: "Pembeli",
+    };
+    const key = String(role).toLowerCase();
+    return map[key] || role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   const fetchPengawas = async () => {
     try {
-      // Mengambil hanya user dengan role 'pengawas'
       const res = await api.get(ENDPOINT);
       setManajer(res.data);
     } catch (err) {
@@ -42,11 +51,9 @@ export default function ManagerPage() {
     setLoading(true);
     try {
       if (isEditing) {
-        // Update user (PUT)
         const dataToSubmit = {
           username: form.username,
           nama: form.nama,
-          // Hanya kirim password jika diisi (ganti password)
           ...(form.password && { password: form.password }),
         };
         await api.put(`${USER_ENDPOINT}/${form.id_user}`, dataToSubmit);
@@ -60,7 +67,6 @@ export default function ManagerPage() {
         });
       }
       fetchPengawas();
-      // Reset form
       setForm({
         id_user: null,
         username: "",
@@ -78,13 +84,12 @@ export default function ManagerPage() {
   };
 
   const handleEdit = (data) => {
-    // Saat edit, jangan bawa password lama
     setForm({
       id_user: data.id_user,
       username: data.username,
       nama: data.nama,
       role: data.role,
-      password: "", // Kosongkan, hanya diisi jika ingin ganti password
+      password: "",
     });
     setIsEditing(true);
   };
@@ -112,122 +117,146 @@ export default function ManagerPage() {
   };
 
   return (
-    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       <SidebarAdmin />
-      <div className="flex-1 xl:ml-[256px]">
+      <div className="flex-1 xl:ml-[260px]">
         <TopbarAdmin />
 
-        <main className="p-6 space-y-8">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
-            🧑‍💼 Kelola User Manajer
-          </h2>
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
+          {/* HEADER */}
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2">
+              <span>🧑‍💼</span> Kelola User Manajer
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Tambahkan atau kelola akun manajer yang bertugas mengawasi lahan.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Kolom Form */}
-            <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 h-fit">
-              <h3 className="text-xl font-medium mb-4 text-gray-800 dark:text-white">
-                {isEditing
-                  ? `Edit Manajer ID ${form.id_user}`
-                  : "Tambah Manajer Baru"}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* FORM CARD */}
+            <div className="lg:col-span-1 relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/80 dark:border-gray-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.6)]">
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80" />
+              <div className="pointer-events-none absolute inset-0 opacity-40">
+                <div className="absolute -top-16 right-0 h-32 w-32 rounded-full bg-emerald-500/15 blur-3xl" />
+                <div className="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-lime-400/10 blur-3xl" />
+              </div>
+
+              <div className="relative p-6 space-y-5">
                 <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    name="nama"
-                    value={form.nama}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 dark:text-gray-300">
+                  <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
                     {isEditing
-                      ? "Ganti Password (Kosongkan jika tidak)"
-                      : "Password"}
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    value={form.password}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 mt-1 dark:bg-gray-700 dark:text-white"
-                    required={!isEditing}
-                  />
+                      ? `Edit Manajer ID ${form.id_user}`
+                      : "Tambah Manajer Baru"}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Nama, username, dan password digunakan untuk login manajer.
+                  </p>
                 </div>
 
-                <div className="flex space-x-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-                  >
-                    {isEditing ? "Simpan Perubahan" : "Tambah Pengawas"}
-                  </button>
-                  {isEditing && (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Nama Lengkap
+                    </label>
+                    <input
+                      type="text"
+                      name="nama"
+                      value={form.nama}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Username
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={form.username}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      {isEditing
+                        ? "Ganti Password (opsional)"
+                        : "Password Akun"}
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={form.password}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      required={!isEditing}
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
                     <button
-                      type="button"
-                      onClick={handleCancelEdit}
-                      className="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500"
+                      type="submit"
+                      disabled={loading}
+                      className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                     >
-                      Batal
+                      {isEditing ? "Simpan Perubahan" : "Tambah Pengawas"}
                     </button>
-                  )}
-                </div>
-              </form>
+                    {isEditing && (
+                      <button
+                        type="button"
+                        onClick={handleCancelEdit}
+                        className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
             </div>
 
-            {/* Kolom Tabel */}
-            <div className="lg:col-span-2 overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-              <table className="min-w-full border-collapse">
-                <thead className="bg-green-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
-                  <tr>
-                    <th className="px-4 py-2 border">ID User</th>
-                    <th className="px-4 py-2 border">Nama</th>
-                    <th className="px-4 py-2 border">Username</th>
-                    <th className="px-4 py-2 border">Role</th>
-                    <th className="px-4 py-2 border text-center">Aksi</th>
+            {/* TABLE CARD */}
+            <div className="lg:col-span-2 overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID User</th>
+                    <th className="px-4 py-3 text-left">Nama</th>
+                    <th className="px-4 py-3 text-left">Username</th>
+                    <th className="px-4 py-3 text-left">Role</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {manajer.map((p) => (
                     <tr
                       key={p.id_user}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      <td className="border px-4 py-2 text-center">
+                      <td className="px-4 py-3 text-sm text-center">
                         {p.id_user}
                       </td>
-                      <td className="border px-4 py-2">{p.nama}</td>
-                      <td className="border px-4 py-2">{p.username}</td>
-                      <td className="border px-4 py-2">{p.role}</td>
-                      <td className="border px-4 py-2 text-center">
+                      <td className="px-4 py-3 text-sm">{p.nama}</td>
+                      <td className="px-4 py-3 text-sm">{p.username}</td>
+                      <td className="px-4 py-3 text-sm">
+                        {formatRole(p.role)}
+                      </td>
+                      <td className="px-4 py-3 text-center space-x-2">
                         <button
                           onClick={() => handleEdit(p)}
-                          className="bg-blue-500 text-white px-3 py-1 rounded mr-2 hover:bg-blue-600"
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(p.id_user)}
-                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
                         >
                           Hapus
                         </button>
@@ -238,9 +267,9 @@ export default function ManagerPage() {
                     <tr>
                       <td
                         colSpan="5"
-                        className="text-center py-4 text-gray-500 dark:text-gray-400"
+                        className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        Tidak ada data Manajer
+                        Tidak ada data Manajer.
                       </td>
                     </tr>
                   )}
@@ -253,3 +282,4 @@ export default function ManagerPage() {
     </div>
   );
 }
+

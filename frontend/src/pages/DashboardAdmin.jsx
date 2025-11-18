@@ -9,12 +9,15 @@ import api from "../services/api";
 function TableToolbar({ title, onRefresh }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">
+        {title}
+      </h3>
       <button
         onClick={onRefresh}
-        className="px-3 py-1 rounded-md border bg-white dark:bg-gray-900 dark:border-gray-700 text-sm shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300/70 bg-white/90 text-xs md:text-sm text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-900/80 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors"
       >
-        Refresh
+        ⟳
+        <span>Refresh</span>
       </button>
     </div>
   );
@@ -24,13 +27,15 @@ function TableToolbar({ title, onRefresh }) {
 function SimpleModal({ open, onClose, title, children }) {
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 p-6 shadow-lg">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-950 border border-gray-200/80 dark:border-gray-800/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.75)]">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-semibold">{title}</h4>
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {title}
+          </h4>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             Close
           </button>
@@ -66,7 +71,6 @@ export default function DashboardAdmin() {
   });
 
   // ======= DEMO DATA FALLBACK =======
-
   const demoHarvests = [
     {
       id_hasil: 1,
@@ -156,7 +160,6 @@ export default function DashboardAdmin() {
   ];
 
   // ======= FETCH FUNCTIONS =======
-
   const loadHarvests = async () => {
     setLoading((s) => ({ ...s, h: true }));
     try {
@@ -173,7 +176,9 @@ export default function DashboardAdmin() {
   const loadLahans = async () => {
     setLoading((s) => ({ ...s, l: true }));
     try {
-      const res = await api.get("/tanaman_lahan").catch(() => ({ data: null }));
+      const res = await api
+        .get("/tanaman_lahan")
+        .catch(() => ({ data: null }));
       setLahans(res.data ?? demoLahans);
     } catch (err) {
       console.error(err);
@@ -246,7 +251,6 @@ export default function DashboardAdmin() {
   }, []);
 
   // ======= EDIT / DELETE HANDLERS =======
-
   const openEdit = (type, item) => {
     setEditType(type);
     setCurrent({ ...item });
@@ -328,7 +332,6 @@ export default function DashboardAdmin() {
   };
 
   // ======= PERHITUNGAN STATS =======
-
   const totalLahan = lahans.length;
   const jenisTanaman = tanamans.length;
   const manajerAktif = managers.length;
@@ -349,7 +352,7 @@ export default function DashboardAdmin() {
       <div className="flex-1 xl:ml-[256px]">
         <TopbarAdmin />
 
-        <main className="p-6 space-y-8">
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
           {/* ======= STAT CARDS ======= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatsCard
@@ -389,14 +392,29 @@ export default function DashboardAdmin() {
               <MonthlySalesChart data={purchases} fromBackend={false} />
             </div>
             <div>
-              <div className="rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700 p-4 transition-colors">
-                <h3 className="font-semibold mb-2">Summary Penjualan</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Total recent orders: {purchases.length}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Total revenue: Rp {totalRevenue}
-                </p>
+              <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/70 dark:border-gray-800/80 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.65)]">
+                <div className="pointer-events-none absolute inset-0 opacity-60">
+                  <div className="absolute -top-16 right-0 h-32 w-32 rounded-full bg-emerald-500/15 blur-3xl" />
+                  <div className="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-sky-500/10 blur-3xl" />
+                </div>
+
+                <div className="relative space-y-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-50">
+                    Summary Penjualan
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Total recent orders:{" "}
+                    <span className="font-semibold text-gray-800 dark:text-gray-100">
+                      {purchases.length}
+                    </span>
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Total revenue:{" "}
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                      Rp {totalRevenue.toLocaleString("id-ID")}
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -404,72 +422,55 @@ export default function DashboardAdmin() {
           {/* ======= TABEL: HASIL PANEN ======= */}
           <section className="space-y-3">
             <TableToolbar title="Tabel Hasil Panen" onRefresh={loadHarvests} />
-            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID Hasil Panen</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Pengawas</th>
-                    <th className="px-4 py-2 text-left text-sm">Tanggal</th>
-                    <th className="px-4 py-2 text-right text-sm">Kuantitas</th>
-                    <th className="px-4 py-2 text-left text-sm">Kualitas</th>
-                    <th className="px-4 py-2 text-right text-sm">Harga Satuan</th>
-                    <th className="px-4 py-2 text-left text-sm">Status</th>
-                    <th className="px-4 py-2 text-center text-sm">Aksi</th>
+            <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID Hasil Panen</th>
+                    <th className="px-4 py-3 text-left">ID Tanaman</th>
+                    <th className="px-4 py-3 text-left">ID Lahan</th>
+                    <th className="px-4 py-3 text-left">ID Pengawas</th>
+                    <th className="px-4 py-3 text-left">Tanggal</th>
+                    <th className="px-4 py-3 text-right">Kuantitas</th>
+                    <th className="px-4 py-3 text-left">Kualitas</th>
+                    <th className="px-4 py-3 text-right">Harga Satuan</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {(loading.h ? [] : harvests).map((h) => (
                     <tr
                       key={h.id_hasil}
-                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm">{h.id_hasil}</td>
-                      <td className="px-4 py-3 text-sm">{h.id_tanaman}</td>
-                      <td className="px-4 py-3 text-sm">{h.id_lahan}</td>
-                      <td className="px-4 py-3 text-sm">{h.id_pengawas}</td>
-                      <td className="px-4 py-3 text-sm">{h.tanggal_panen}</td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        {h.kuantitas}
-                      </td>
-                      <td className="px-4 py-3 text-sm">{h.kualitas}</td>
-                      <td className="px-4 py-3 text-sm text-right">
+                      <td className="px-4 py-3">{h.id_hasil}</td>
+                      <td className="px-4 py-3">{h.id_tanaman}</td>
+                      <td className="px-4 py-3">{h.id_lahan}</td>
+                      <td className="px-4 py-3">{h.id_pengawas}</td>
+                      <td className="px-4 py-3">{h.tanggal_panen}</td>
+                      <td className="px-4 py-3 text-right">{h.kuantitas}</td>
+                      <td className="px-4 py-3">{h.kualitas}</td>
+                      <td className="px-4 py-3 text-right">
                         Rp {h.harga_satuan}
                       </td>
-                      <td className="px-4 py-3 text-sm">{h.status}</td>
+                      <td className="px-4 py-3">{h.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
-                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("harvest", h)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
-                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
                         >
                           Edit
                         </button>
-                        {/* TOGGLE STATUS */}
                         <button
                           onClick={() => toggleHarvestStatus(h)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-green-100 text-green-700 border-green-300 hover:bg-green-200
-                            dark:bg-green-500/20 dark:text-green-300 dark:border-green-400/40 dark:hover:bg-green-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:bg-green-500/15 dark:text-green-300 dark:border-green-400/40 dark:hover:bg-green-500/25 transition-colors"
                         >
                           Toggle Status
                         </button>
-                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("harvest", h.id_hasil)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
-                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
                         >
                           Delete
                         </button>
@@ -494,51 +495,39 @@ export default function DashboardAdmin() {
           {/* ======= TABEL: TANAMAN LAHAN ======= */}
           <section className="space-y-3">
             <TableToolbar title="Tabel Tanaman Lahan" onRefresh={loadLahans} />
-            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm">
-                      ID Tanaman Lahan
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
-                    <th className="px-4 py-2 text-left text-sm">Tanggal</th>
-                    <th className="px-4 py-2 text-left text-sm">Status</th>
-                    <th className="px-4 py-2 text-center text-sm">Aksi</th>
+            <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID Tanaman Lahan</th>
+                    <th className="px-4 py-3 text-left">ID Lahan</th>
+                    <th className="px-4 py-3 text-left">ID Tanaman</th>
+                    <th className="px-4 py-3 text-left">Tanggal</th>
+                    <th className="px-4 py-3 text-left">Status</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {(loading.l ? [] : lahans).map((l) => (
                     <tr
                       key={l.id_tl}
-                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm">{l.id_tl}</td>
-                      <td className="px-4 py-3 text-sm">{l.id_lahan}</td>
-                      <td className="px-4 py-3 text-sm">{l.id_tanaman}</td>
-                      <td className="px-4 py-3 text-sm">{l.tanggal_tanam}</td>
-                      <td className="px-4 py-3 text-sm">{l.status}</td>
+                      <td className="px-4 py-3">{l.id_tl}</td>
+                      <td className="px-4 py-3">{l.id_lahan}</td>
+                      <td className="px-4 py-3">{l.id_tanaman}</td>
+                      <td className="px-4 py-3">{l.tanggal_tanam}</td>
+                      <td className="px-4 py-3">{l.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
-                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("lahan", l)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
-                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
                         >
                           Edit
                         </button>
-                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("lahan", l.id_tl)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
-                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
                         >
                           Delete
                         </button>
@@ -563,51 +552,39 @@ export default function DashboardAdmin() {
           {/* ======= TABEL: MONITORING ======= */}
           <section className="space-y-3">
             <TableToolbar title="Tabel Monitoring" onRefresh={loadMonitors} />
-            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID Monitor</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
-                    <th className="px-4 py-2 text-left text-sm">Suhu (°C)</th>
-                    <th className="px-4 py-2 text-left text-sm">
-                      Kelembapan (%)
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm">Tanggal</th>
-                    <th className="px-4 py-2 text-center text-sm">Aksi</th>
+            <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID Monitor</th>
+                    <th className="px-4 py-3 text-left">ID Lahan</th>
+                    <th className="px-4 py-3 text-left">Suhu (°C)</th>
+                    <th className="px-4 py-3 text-left">Kelembapan (%)</th>
+                    <th className="px-4 py-3 text-left">Tanggal</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {(loading.m ? [] : monitors).map((mo) => (
                     <tr
                       key={mo.id_monitor}
-                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm">{mo.id_monitor}</td>
-                      <td className="px-4 py-3 text-sm">{mo.id_lahan}</td>
-                      <td className="px-4 py-3 text-sm">{mo.suhu}</td>
-                      <td className="px-4 py-3 text-sm">{mo.kelembaban}</td>
-                      <td className="px-4 py-3 text-sm">{mo.tanggal}</td>
+                      <td className="px-4 py-3">{mo.id_monitor}</td>
+                      <td className="px-4 py-3">{mo.id_lahan}</td>
+                      <td className="px-4 py-3">{mo.suhu}</td>
+                      <td className="px-4 py-3">{mo.kelembaban}</td>
+                      <td className="px-4 py-3">{mo.tanggal}</td>
                       <td className="px-4 py-3 text-center space-x-2">
-                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("monitor", mo)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
-                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
                         >
                           Edit
                         </button>
-                        {/* DELETE */}
                         <button
                           onClick={() => handleDelete("monitor", mo.id_monitor)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
-                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
                         >
                           Delete
                         </button>
@@ -635,61 +612,45 @@ export default function DashboardAdmin() {
               title="Tabel Pembelian (Recent Orders)"
               onRefresh={loadPurchases}
             />
-            <div className="overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 transition-colors">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
-                <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0 transition-colors">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-sm">
-                      ID Pembelian
-                    </th>
-                    <th className="px-4 py-2 text-left text-sm">ID Pembeli</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Hasil</th>
-                    <th className="px-4 py-2 text-left text-sm">Tanggal</th>
-                    <th className="px-4 py-2 text-right text-sm">Jumlah</th>
-                    <th className="px-4 py-2 text-right text-sm">
-                      Total Harga
-                    </th>
-                    <th className="px-4 py-2 text-center text-sm">Aksi</th>
+            <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
+                <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
+                  <tr className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    <th className="px-4 py-3 text-left">ID Pembelian</th>
+                    <th className="px-4 py-3 text-left">ID Pembeli</th>
+                    <th className="px-4 py-3 text-left">ID Hasil</th>
+                    <th className="px-4 py-3 text-left">Tanggal</th>
+                    <th className="px-4 py-3 text-right">Jumlah</th>
+                    <th className="px-4 py-3 text-right">Total Harga</th>
+                    <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {(loading.p ? [] : purchases).map((p) => (
                     <tr
                       key={p.id_pembelian}
-                      className="border-b last:border-b-0 border-gray-200 dark:border-gray-700"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
                     >
-                      <td className="px-4 py-3 text-sm">{p.id_pembelian}</td>
-                      <td className="px-4 py-3 text-sm">{p.id_pembeli}</td>
-                      <td className="px-4 py-3 text-sm">{p.id_hasil}</td>
-                      <td className="px-4 py-3 text-sm">{p.tanggal}</td>
-                      <td className="px-4 py-3 text-sm text-right">
-                        {p.jumlah}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-right">
+                      <td className="px-4 py-3">{p.id_pembelian}</td>
+                      <td className="px-4 py-3">{p.id_pembeli}</td>
+                      <td className="px-4 py-3">{p.id_hasil}</td>
+                      <td className="px-4 py-3">{p.tanggal}</td>
+                      <td className="px-4 py-3 text-right">{p.jumlah}</td>
+                      <td className="px-4 py-3 text-right">
                         Rp {p.total_harga}
                       </td>
                       <td className="px-4 py-3 text-center space-x-2">
-                        {/* EDIT */}
                         <button
                           onClick={() => openEdit("purchase", p)}
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200
-                            dark:bg-blue-500/20 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-400/40 dark:hover:bg-blue-500/25 transition-colors"
                         >
                           Edit
                         </button>
-                        {/* DELETE */}
                         <button
                           onClick={() =>
                             handleDelete("purchase", p.id_pembelian)
                           }
-                          className="
-                            text-sm px-3 py-1 rounded-md border transition
-                            bg-red-100 text-red-700 border-red-300 hover:bg-red-200
-                            dark:bg-red-500/20 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/30
-                          "
+                          className="text-xs px-3 py-1.5 rounded-full border bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:bg-red-500/15 dark:text-red-300 dark:border-red-400/40 dark:hover:bg-red-500/25 transition-colors"
                         >
                           Delete
                         </button>
@@ -729,7 +690,7 @@ export default function DashboardAdmin() {
                     {k}
                   </label>
                   <input
-                    className="flex-1 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                    className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
                     value={current[k] ?? ""}
                     onChange={(e) =>
                       setCurrent((c) => ({ ...c, [k]: e.target.value }))
@@ -742,13 +703,13 @@ export default function DashboardAdmin() {
             <div className="flex justify-end gap-3 mt-4">
               <button
                 onClick={() => setEditOpen(false)}
-                className="px-4 py-2 rounded border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm"
+                className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 rounded bg-blue-600 text-white text-sm hover:bg-blue-700"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700"
               >
                 Save
               </button>
