@@ -32,15 +32,15 @@ public class AuthMiddleware {
             String role = JwtUtil.getRole(token);
 
             // Role-based access control
-            if (path.startsWith("/api/admin") && !"admin".equalsIgnoreCase(role)) {
+            if (path.startsWith("/api/admin/") && !"admin".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Admin only");
             }
 
-            if (path.startsWith("/api/manager") && !"manajer".equalsIgnoreCase(role)) {
+            if (path.startsWith("/api/manager/") && !"manajer".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Manager only");
             }
 
-            if (path.startsWith("/api/pembeli") && !"pembeli".equalsIgnoreCase(role)) {
+            if (path.startsWith("/api/pembeli/") && !"pembeli".equalsIgnoreCase(role)) {
                 halt(403, "Access denied: Buyer only");
             }
 

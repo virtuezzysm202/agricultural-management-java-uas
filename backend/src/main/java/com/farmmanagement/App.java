@@ -9,6 +9,7 @@ import com.farmmanagement.controller.HasilPanenController;
 import com.farmmanagement.controller.LahanController;
 import com.farmmanagement.controller.ManagerController;
 import com.farmmanagement.controller.MonitoringController;
+import com.farmmanagement.controller.PembelianController;
 import com.farmmanagement.controller.TanamanController;
 import com.farmmanagement.controller.TanamanLahanController;
 import com.farmmanagement.controller.UserController;
@@ -48,6 +49,7 @@ public class App {
         HasilPanenController.registerRoutes();
         MonitoringController.registerRoutes();
         TanamanLahanController.registerRoutes();
+        PembelianController.registerRoutes();
 
         // Endpoint test
         get("/hello", (req, res) -> "Farm Management Backend Running ✅");

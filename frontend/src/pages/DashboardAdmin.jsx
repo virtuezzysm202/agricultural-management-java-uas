@@ -9,7 +9,7 @@ import api from "../services/api"; // axios instance (see snippet below if belum
   DashboardAdmin:
   - Menampilkan statistik ringkas
   - Menampilkan grafik monthly sales (komponen MonthlySalesChart)
-  - Tabel: hasil_panen, lahan, monitoring, pembelian
+  - Tabel: hasil_panen, tanaman_lahan, monitoring, pembelian
   - Edit & Delete sederhana via modal dan konfirmasi
   - Refresh setiap tabel
 */
