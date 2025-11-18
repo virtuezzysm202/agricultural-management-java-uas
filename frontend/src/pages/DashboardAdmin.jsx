@@ -102,7 +102,7 @@ export default function DashboardAdmin() {
   const loadLahans = async () => {
     setLoading((s) => ({ ...s, l: true }));
     try {
-      const res = await api.get("/lahan").catch(() => ({ data: null }));
+      const res = await api.get("/tanaman_lahan").catch(() => ({ data: null }));
       setLahans(res.data ?? demoLahans);
     } catch (err) {
       console.error(err);
@@ -160,7 +160,7 @@ export default function DashboardAdmin() {
       // map type to endpoint
       const map = {
         harvest: "hasil_panen",
-        lahan: "lahan",
+        lahan: "tanaman_lahan",
         monitor: "monitoring",
         purchase: "pembelian",
       };
@@ -181,7 +181,7 @@ export default function DashboardAdmin() {
     try {
       const map = {
         harvest: "hasil_panen",
-        lahan: "lahan",
+        lahan: "tanaman_lahan",
         monitor: "monitoring",
         purchase: "pembelian",
       };
@@ -191,7 +191,7 @@ export default function DashboardAdmin() {
         editType === "harvest"
           ? "id_hasil"
           : editType === "lahan"
-          ? "id_lahan"
+          ? "id_tl"
           : editType === "monitor"
           ? "id_monitor"
           : "id_pembelian";
@@ -258,18 +258,18 @@ export default function DashboardAdmin() {
 
   const demoLahans = [
     {
+      id_tl: 1,
       id_lahan: 1,
-      nama_lahan: "Lahan A",
-      luas: 2.5,
-      lokasi: "Desa X",
-      id_pengawas: 2,
+      id_tanaman: 1,
+      tanggal_tanam: "2025-02-01",
+      status: "tumbuh",
     },
     {
+      id_tl: 2,
       id_lahan: 2,
-      nama_lahan: "Lahan B",
-      luas: 1.2,
-      lokasi: "Desa Y",
-      id_pengawas: 3,
+      id_tanaman: 1,
+      tanggal_tanam: "2025-01-15",
+      status: "panen",
     },
   ];
 
@@ -378,7 +378,7 @@ export default function DashboardAdmin() {
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID</th>
+                    <th className="px-4 py-2 text-left text-sm">ID Hasil Panen</th>
                     <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
                     <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
                     <th className="px-4 py-2 text-left text-sm">ID Pengawas</th>
@@ -435,29 +435,29 @@ export default function DashboardAdmin() {
             </div>
           </section>
 
-          {/* Tables: Lahan */}
+          {/* Tables: Tanaman Lahan */}
           <section className="mb-8">
-            <TableToolbar title="Tabel Lahan" onRefresh={loadLahans} />
+            <TableToolbar title="Tabel Tanaman Lahan" onRefresh={loadLahans} />
             <div className="overflow-auto bg-white rounded-lg border">
               <table className="min-w-full divide-y">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-left text-sm">ID</th>
-                    <th className="px-4 py-2 text-left text-sm">Nama Lahan</th>
-                    <th className="px-4 py-2 text-left text-sm">Luas (ha)</th>
-                    <th className="px-4 py-2 text-left text-sm">Lokasi</th>
-                    <th className="px-4 py-2 text-left text-sm">ID Pengawas</th>
+                    <th className="px-4 py-2 text-left text-sm">ID Tanaman Lahan</th>
+                    <th className="px-4 py-2 text-left text-sm">ID Lahan</th>
+                    <th className="px-4 py-2 text-left text-sm">ID Tanaman</th>
+                    <th className="px-4 py-2 text-left text-sm">Tanggal</th>
+                    <th className="px-4 py-2 text-left text-sm">Status</th>
                     <th className="px-4 py-2 text-center text-sm">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(loading.l ? [] : lahans).map((l) => (
-                    <tr key={l.id_lahan} className="border-b last:border-b-0">
+                    <tr key={l.id_tl} className="border-b last:border-b-0">
+                      <td className="px-4 py-3 text-sm">{l.id_tl}</td>
                       <td className="px-4 py-3 text-sm">{l.id_lahan}</td>
-                      <td className="px-4 py-3 text-sm">{l.nama_lahan}</td>
-                      <td className="px-4 py-3 text-sm">{l.luas}</td>
-                      <td className="px-4 py-3 text-sm">{l.lokasi}</td>
-                      <td className="px-4 py-3 text-sm">{l.id_pengawas}</td>
+                      <td className="px-4 py-3 text-sm">{l.id_tanaman}</td>
+                      <td className="px-4 py-3 text-sm">{l.tanggal_tanam}</td>
+                      <td className="px-4 py-3 text-sm">{l.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
                         <button
                           onClick={() => openEdit("lahan", l)}
@@ -466,7 +466,7 @@ export default function DashboardAdmin() {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDelete("lahan", l.id_lahan)}
+                          onClick={() => handleDelete("lahan", l.id_tl)}
                           className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded"
                         >
                           Delete
