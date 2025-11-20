@@ -122,7 +122,99 @@ public class ManagerController {
                 }
             });
 
-            // ============= TANAMAN OPERATIONS (GET & ADD) =============
+            // ============= MONITORING OPERATIONS (GET & UPDATE ONLY) =============
+            
+            // GET all monitoring data for manager
+            get("/monitoring", (req, res) -> {
+                res.type("application/json");
+                try {
+                    List<Monitoring> list = monitoringService.getAllMonitoring();
+                    return gson.toJson(Map.of(
+                        "status", "success",
+                        "message", "Data monitoring berhasil diambil",
+                        "data", list
+                    ));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/manager/monitoring: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal mengambil data monitoring"));
+                }
+            });
+
+            // GET monitoring by ID for manager
+            get("/monitoring/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    Monitoring monitoring = monitoringService.getMonitoringById(id);
+                    
+                    if (monitoring != null) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Data monitoring ditemukan",
+                            "data", monitoring
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Data monitoring tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/manager/monitoring/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error"));
+                }
+            });
+
+            // UPDATE monitoring data for manager
+            put("/monitoring/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    Monitoring monitoring = gson.fromJson(req.body(), Monitoring.class);
+                    monitoring.setId_monitor(id);
+
+                    // Validation for manager updates
+                    if (monitoring.getSuhu() < -50 || monitoring.getSuhu() > 60) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Suhu harus dalam rentang -50°C sampai 60°C"));
+                    }
+                    
+                    if (monitoring.getKelembaban() < 0 || monitoring.getKelembaban() > 100) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Kelembaban harus dalam rentang 0% sampai 100%"));
+                    }
+
+                    boolean updated = monitoringService.updateMonitoring(monitoring);
+                    
+                    if (updated) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Data monitoring berhasil diperbarui oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Gagal memperbarui monitoring: ID tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka"));
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    System.err.println("JSON Parsing Error (PUT monitoring): " + e.getMessage());
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid"));
+                } catch (Exception e) {
+                    System.err.println("Error PUT /api/manager/monitoring/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat update"));
+                }
+            });
+
+            // ============= TANAMAN OPERATIONS (GET) =============
             
             // GET all tanaman for manager
             get("/tanaman", (req, res) -> {
@@ -169,50 +261,6 @@ public class ManagerController {
                 }
             });
 
-            // ADD new tanaman for manager
-            post("/tanaman", (req, res) -> {
-                res.type("application/json");
-                try {
-                    Tanaman tanaman = gson.fromJson(req.body(), Tanaman.class);
-                    
-                    // Validation for manager adding tanaman
-                    if (tanaman.getNama_tanaman() == null || tanaman.getNama_tanaman().trim().isEmpty()) {
-                        res.status(400);
-                        return gson.toJson(Map.of("error", "Nama tanaman tidak boleh kosong"));
-                    }
-                    
-                    if (tanaman.getJenis() == null || tanaman.getJenis().trim().isEmpty()) {
-                        res.status(400);
-                        return gson.toJson(Map.of("error", "Jenis tanaman tidak boleh kosong"));
-                    }
-                    
-                    if (tanaman.getWaktu_tanam() == null) {
-                        res.status(400);
-                        return gson.toJson(Map.of("error", "Waktu tanam tidak boleh kosong"));
-                    }
-
-                    boolean added = tanamanService.addTanaman(tanaman);
-                    
-                    if (added) {
-                        return gson.toJson(Map.of(
-                            "status", "success",
-                            "message", "Tanaman berhasil ditambahkan oleh manajer"
-                        ));
-                    }
-                    
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Gagal menambahkan tanaman"));
-                    
-                } catch (com.google.gson.JsonSyntaxException e) {
-                    System.err.println("JSON Parsing Error (POST tanaman): " + e.getMessage());
-                    res.status(400);
-                    return gson.toJson(Map.of("error", "Format data JSON tidak valid"));
-                } catch (Exception e) {
-                    System.err.println("Error POST /api/manager/tanaman: " + e.getMessage());
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Internal Server Error saat menambah tanaman"));
-                }
-            });
 
             // ============= TANAMAN LAHAN OPERATIONS (GET & ADD) =============
             
