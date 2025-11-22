@@ -15,6 +15,10 @@ public class MonitoringService {
         return repo.findById(id);
     }
 
+    public boolean addMonitoring(Monitoring monitoring) {
+        return repo.save(monitoring);
+    }
+
     public boolean updateMonitoring(Monitoring monitoring) {
         return repo.update(monitoring);
     }

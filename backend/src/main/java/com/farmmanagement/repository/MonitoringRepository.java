@@ -7,7 +7,6 @@ import com.farmmanagement.model.Monitoring;
 
 public class MonitoringRepository {
 
-    // Ambil semua data monitoring
     public List<Monitoring> findAll() {
         String sql = "SELECT * FROM monitoring";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
@@ -15,7 +14,6 @@ public class MonitoringRepository {
         }
     }
 
-    // Ambil monitoring berdasarkan ID
     public Monitoring findById(int id) {
         String sql = "SELECT * FROM monitoring WHERE id_monitor = :id";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
@@ -25,7 +23,22 @@ public class MonitoringRepository {
         }
     }
 
-    // Update monitoring berdasarkan ID
+    public boolean save(Monitoring monitoring) {
+        String sql = "INSERT INTO monitoring (id_lahan, suhu, kelembaban, tanggal) " +
+                     "VALUES (:id_lahan, :suhu, :kelembaban, :tanggal)";
+
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_lahan", monitoring.getId_lahan())
+                             .addParameter("suhu", monitoring.getSuhu())
+                             .addParameter("kelembaban", monitoring.getKelembaban())
+                             .addParameter("tanggal", monitoring.getTanggal())
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
+        }
+    }
+
     public boolean update(Monitoring monitoring) {
         String sql = "UPDATE monitoring SET id_lahan = :id_lahan, suhu = :suhu, " +
                      "kelembaban = :kelembaban, tanggal = :tanggal " +
@@ -43,7 +56,6 @@ public class MonitoringRepository {
         }
     }
 
-    // Hapus monitoring berdasarkan ID
     public boolean delete(int id) {
         String sql = "DELETE FROM monitoring WHERE id_monitor = :id";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {

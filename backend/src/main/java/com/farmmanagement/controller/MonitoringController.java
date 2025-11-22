@@ -12,44 +12,123 @@ public class MonitoringController {
     private static final MonitoringService monitoringService = new MonitoringService();
     private static final Gson gson = new GsonBuilder().serializeNulls().create();
 
+    // =====================================================
+    // Helper Role Checking
+    // =====================================================
+    private static boolean isAdmin(String role) {
+        return role != null && role.equalsIgnoreCase("admin");
+    }
+
+    private static boolean isManager(String role) {
+        return role != null && role.equalsIgnoreCase("manager");
+    }
+
     public static void registerRoutes() {
         path("/api/monitoring", () -> {
 
-            // GET semua monitoring
-            get("", (req, res) -> {
+            // ==========================================================
+            // POST - Tambah monitoring (Manager Only)
+            // ==========================================================
+            post("", (req, res) -> {
                 res.type("application/json");
-                try {
-                    List<Monitoring> list = monitoringService.getAllMonitoring();
-                    return gson.toJson(list);
-                } catch (Exception e) {
-                    System.err.println("Error GET /api/monitoring: " + e.getMessage());
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Gagal mengambil data monitoring dari database."));
-                }
-            });
+                String role = req.headers("Role");
 
-            // GET monitoring by id
-            get("/:id", (req, res) -> {
-                res.type("application/json");
+                if (!isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak. Hanya Manajer yang dapat menambah monitoring."));
+                }
+
                 try {
-                    int id = Integer.parseInt(req.params("id"));
-                    Monitoring monitoring = monitoringService.getMonitoringById(id);
-                    if (monitoring != null) return gson.toJson(monitoring);
-                    res.status(404);
-                    return gson.toJson(Map.of("error", "Monitoring tidak ditemukan"));
-                } catch (NumberFormatException e) {
-                    res.status(400);
-                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka."));
+                    Monitoring monitoring = gson.fromJson(req.body(), Monitoring.class);
+
+                    if (monitoring.getId_lahan() <= 0 ||
+                        monitoring.getSuhu() <= 0 ||
+                        monitoring.getKelembaban() <= 0 ||
+                        monitoring.getTanggal() == null) 
+                    {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Data monitoring tidak lengkap atau tidak valid."));
+                    }
+
+                    boolean ok = monitoringService.addMonitoring(monitoring);
+
+                    if (ok) {
+                        res.status(201);
+                        return gson.toJson(Map.of("message", "Monitoring berhasil ditambahkan"));
+                    }
+
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal menambahkan data monitoring."));
+
                 } catch (Exception e) {
-                    System.err.println("Error GET /api/monitoring/:id: " + e.getMessage());
                     res.status(500);
                     return gson.toJson(Map.of("error", "Internal Server Error."));
                 }
             });
 
-            // PUT update monitoring
+
+            // ==========================================================
+            // GET - Semua monitoring (Admin + Manager)
+            // ==========================================================
+            get("", (req, res) -> {
+                res.type("application/json");
+                String role = req.headers("Role");
+
+                if (!isAdmin(role) && !isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak."));
+                }
+
+                try {
+                    List<Monitoring> list = monitoringService.getAllMonitoring();
+                    return gson.toJson(list);
+                } catch (Exception e) {
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal mengambil data monitoring."));
+                }
+            });
+
+
+            // ==========================================================
+            // GET - Monitoring by ID (Admin + Manager)
+            // ==========================================================
+            get("/:id", (req, res) -> {
+                res.type("application/json");
+                String role = req.headers("Role");
+
+                if (!isAdmin(role) && !isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak."));
+                }
+
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    Monitoring monitoring = monitoringService.getMonitoringById(id);
+
+                    if (monitoring != null) return gson.toJson(monitoring);
+
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Monitoring tidak ditemukan"));
+
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID harus berupa angka."));
+                }
+            });
+
+
+            // ==========================================================
+            // PUT - Update monitoring (Admin + Manager)
+            // ==========================================================
             put("/:id", (req, res) -> {
                 res.type("application/json");
+                String role = req.headers("Role");
+
+                if (!isAdmin(role) && !isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak."));
+                }
+
                 try {
                     int id = Integer.parseInt(req.params("id"));
                     Monitoring monitoring = gson.fromJson(req.body(), Monitoring.class);
@@ -57,50 +136,50 @@ public class MonitoringController {
 
                     if (monitoring.getSuhu() < 0 || monitoring.getKelembaban() < 0) {
                         res.status(400);
-                        return gson.toJson(Map.of("error", "Data monitoring tidak lengkap atau tidak valid."));
+                        return gson.toJson(Map.of("error", "Data monitoring tidak valid."));
                     }
 
                     boolean ok = monitoringService.updateMonitoring(monitoring);
-                    if (ok) {
-                        return gson.toJson(Map.of("message", "Monitoring berhasil diperbarui"));
-                    }
+
+                    if (ok) return gson.toJson(Map.of("message", "Monitoring berhasil diperbarui"));
+
                     res.status(404);
-                    return gson.toJson(Map.of("error", "Gagal memperbarui monitoring: ID tidak ditemukan atau data salah."));
-                } catch (NumberFormatException e) {
-                    res.status(400);
-                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka."));
-                } catch (com.google.gson.JsonSyntaxException e) {
-                    System.err.println("JSON Parsing Error (PUT /monitoring): " + e.getMessage());
-                    res.status(400);
-                    return gson.toJson(Map.of("error", "Format data JSON yang dikirim salah."));
+                    return gson.toJson(Map.of("error", "ID monitoring tidak ditemukan."));
+
                 } catch (Exception e) {
-                    System.err.println("Error PUT /api/monitoring/:id:");
-                    e.printStackTrace();
                     res.status(500);
-                    return gson.toJson(Map.of("error", "Internal Server Error saat update."));
+                    return gson.toJson(Map.of("error", "Internal Server Error."));
                 }
             });
 
-            // DELETE hapus monitoring
+
+            // ==========================================================
+            // DELETE - Hapus monitoring (Manager Only)
+            // ==========================================================
             delete("/:id", (req, res) -> {
                 res.type("application/json");
+                String role = req.headers("Role");
+
+                if (!isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak. Hanya Manajer yang dapat menghapus monitoring."));
+                }
+
                 try {
                     int id = Integer.parseInt(req.params("id"));
                     boolean ok = monitoringService.deleteMonitoring(id);
-                    if (ok) {
-                        return gson.toJson(Map.of("message", "Monitoring berhasil dihapus"));
-                    }
+
+                    if (ok) return gson.toJson(Map.of("message", "Monitoring berhasil dihapus"));
+
                     res.status(404);
-                    return gson.toJson(Map.of("error", "Gagal menghapus monitoring: ID tidak ditemukan."));
-                } catch (NumberFormatException e) {
-                    res.status(400);
-                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka."));
+                    return gson.toJson(Map.of("error", "ID monitoring tidak ditemukan."));
+
                 } catch (Exception e) {
-                    System.err.println("Error DELETE /api/monitoring/:id: " + e.getMessage());
                     res.status(500);
-                    return gson.toJson(Map.of("error", "Internal Server Error saat hapus."));
+                    return gson.toJson(Map.of("error", "Internal Server Error."));
                 }
             });
+
         });
     }
 }
