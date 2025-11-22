@@ -1,5 +1,6 @@
 package com.farmmanagement.controller;
 
+import java.util.List;
 import java.util.Map;
 
 import com.farmmanagement.model.Pembelian;
@@ -26,7 +27,7 @@ public class BuyerController {
                 return gson.toJson(Map.of("message", "Welcome to Buyer Dashboard"));
             });
 
-              post("", (req, res) -> {
+            post("", (req, res) -> {
                 res.type("application/json");
                 try {
                     System.out.println("Received JSON for pembelian: " + req.body()); // Debug line
@@ -80,6 +81,52 @@ public class BuyerController {
                     e.printStackTrace();
                     res.status(500);
                     return gson.toJson(Map.of("error", "Internal Server Error saat menambah pembelian"));
+                }
+            });
+
+            
+            // GET all pembelian
+            get("/pembelian", (req, res) -> {
+                res.type("application/json");
+                try {
+                    List<Pembelian> list = pembelianService.getAllPembelian();
+                    return gson.toJson(Map.of(
+                        "status", "success",
+                        "message", "Daftar pembelian berhasil diambil",
+                        "data", list
+                    ));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/pembeli/pembelian: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal mengambil data pembelian"));
+                }
+            });
+
+            // GET pembelian by ID
+            get("/pembelian/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    Pembelian pembelian = pembelianService.getPembelianById(id);
+                    
+                    if (pembelian != null) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Pembelian ditemukan",
+                            "data", pembelian
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Pembelian tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID pembelian harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/pembeli/pembelian/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error"));
                 }
             });
         });
