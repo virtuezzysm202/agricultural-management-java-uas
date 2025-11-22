@@ -20,6 +20,10 @@ function App() {
         <Route path="/dashboard/admin/lahan" element={<LahanPage />} />
         <Route path="/dashboard/admin/manajer" element={<ManagerPage />} />
         <Route path="/dashboard/manager" element={<DashboardManager />} />
+        <Route path="/dashboard/manager/tanaman-lahan" element={<TanamanLahanPage />} />
+        <Route path="/dashboard/manager/hasil-panen" element={<HasilPanenPage />} />
+        <Route path="/dashboard/manager/monitoring" element={<MonitoringPage />} />
+        <Route path="/dashboard/manager/pembelian" element={<PembelianPage />} />
       </Routes>
     </BrowserRouter>
   );
