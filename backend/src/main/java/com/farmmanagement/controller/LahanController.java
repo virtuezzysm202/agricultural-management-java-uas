@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.farmmanagement.model.Lahan;
+import com.farmmanagement.model.User;
 import com.farmmanagement.service.LahanService;
+import com.farmmanagement.service.UserService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -17,6 +19,7 @@ import static spark.Spark.put;
 public class LahanController {
 
     private static final LahanService lahanService = new LahanService();
+    private static final UserService userService = new UserService();
     // Menggunakan Gson standar karena tidak ada Date
     private static final Gson gson = new GsonBuilder().create();
 
@@ -71,6 +74,17 @@ public class LahanController {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Data lahan tidak lengkap atau tidak valid (Nama, Luas, Pengawas harus diisi)."));
                     }
+
+                    User pengawas = userService.getUserById(l.getId_pengawas());
+                    if (pengawas == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas tidak ditemukan."));
+                    }
+                    
+                    if (!"manajer".equalsIgnoreCase(pengawas.getRole())) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas harus memiliki role 'manajer'. Role saat ini: " + pengawas.getRole()));
+                    }
                     
                     boolean ok = lahanService.addLahan(l);
                     
@@ -105,6 +119,18 @@ public class LahanController {
                     if (l.getNama_lahan() == null || l.getNama_lahan().isEmpty() || l.getLuas() <= 0 || l.getId_pengawas() <= 0) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Data lahan tidak lengkap atau tidak valid."));
+                    }
+                    
+
+                    User pengawas = userService.getUserById(l.getId_pengawas());
+                    if (pengawas == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas tidak ditemukan."));
+                    }
+                    
+                    if (!"manajer".equalsIgnoreCase(pengawas.getRole())) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas harus memiliki role 'manajer'. Role saat ini: " + pengawas.getRole()));
                     }
                     
                     boolean ok = lahanService.updateLahan(l);

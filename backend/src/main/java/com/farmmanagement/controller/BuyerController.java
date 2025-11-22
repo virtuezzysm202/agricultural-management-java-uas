@@ -1,11 +1,23 @@
 package com.farmmanagement.controller;
 
-import static spark.Spark.*;
-import com.google.gson.Gson;
 import java.util.Map;
 
+import com.farmmanagement.model.Pembelian;
+import com.farmmanagement.service.PembelianService;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import static spark.Spark.get;
+import static spark.Spark.path;
+import static spark.Spark.post;
+
 public class BuyerController {
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder()
+        .setDateFormat("yyyy-MM-dd HH:mm:ss")
+        .serializeNulls()
+        .create();
+
+    private static final PembelianService pembelianService = new PembelianService();
 
     public static void registerRoutes() {
         path("/api/pembeli", () -> {
@@ -13,6 +25,64 @@ public class BuyerController {
                 res.type("application/json");
                 return gson.toJson(Map.of("message", "Welcome to Buyer Dashboard"));
             });
+
+              post("", (req, res) -> {
+                res.type("application/json");
+                try {
+                    System.out.println("Received JSON for pembelian: " + req.body()); // Debug line
+                    Pembelian pembelian = gson.fromJson(req.body(), Pembelian.class);
+                    
+                    // Validation
+                    if (pembelian.getId_pembeli() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pembeli harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (pembelian.getId_hasil() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID hasil panen harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (pembelian.getJumlah() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Jumlah harus lebih dari 0"));
+                    }
+                    
+                    if (pembelian.getTotal_harga() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Total harga harus lebih dari 0"));
+                    }
+                    
+                    if (pembelian.getTanggal() == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Tanggal pembelian tidak boleh kosong"));
+                    }
+
+                    boolean added = pembelianService.addPembelian(pembelian);
+                    
+                    if (added) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Pembelian berhasil ditambahkan"
+                        ));
+                    }
+                    
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal menambahkan pembelian"));
+                    
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    System.err.println("JSON Parsing Error (POST /pembelian): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
+                } catch (Exception e) {
+                    System.err.println("Error POST /api/pembelian: " + e.getMessage());
+                    e.printStackTrace();
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menambah pembelian"));
+                }
+            });
         });
+        
     }
 }

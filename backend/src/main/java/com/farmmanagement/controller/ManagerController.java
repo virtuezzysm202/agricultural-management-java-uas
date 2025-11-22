@@ -14,6 +14,7 @@ import com.farmmanagement.service.TanamanService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import static spark.Spark.delete;
 import static spark.Spark.get;
 import static spark.Spark.path;
 import static spark.Spark.post;
@@ -206,6 +207,33 @@ public class ManagerController {
                 }
             });
 
+            // DELETE hasil panen for manager
+            delete("/hasil-panen/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    boolean deleted = hasilPanenService.deleteHasilPanen(id);
+                    
+                    if (deleted) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Hasil panen berhasil dihapus oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Gagal menghapus hasil panen: ID tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID hasil panen harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error DELETE /api/manager/hasil-panen/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menghapus"));
+                }
+            });
+
             // ============= MONITORING OPERATIONS (CREATE, GET, UPDATE) =============
             
             // CREATE new monitoring data for manager
@@ -350,6 +378,35 @@ public class ManagerController {
                     return gson.toJson(Map.of("error", "Internal Server Error saat update"));
                 }
             });
+
+            
+            // DELETE monitoring for manager
+            delete("/monitoring/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    boolean deleted = monitoringService.deleteMonitoring(id);
+                    
+                    if (deleted) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Data monitoring berhasil dihapus oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Gagal menghapus monitoring: ID tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID monitoring harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error DELETE /api/manager/monitoring/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menghapus"));
+                }
+            });
+
 
             // ============= TANAMAN OPERATIONS (GET) =============
             
@@ -501,6 +558,33 @@ public class ManagerController {
                     System.err.println("Error POST /api/manager/tanaman-lahan: " + e.getMessage());
                     res.status(500);
                     return gson.toJson(Map.of("error", "Internal Server Error saat menambah tanaman lahan"));
+                }
+            });
+
+             // DELETE tanaman lahan for manager
+            delete("/tanaman-lahan/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    boolean deleted = tanamanLahanService.deleteTanamanLahan(id);
+                    
+                    if (deleted) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Tanaman lahan berhasil dihapus oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Gagal menghapus tanaman lahan: ID tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID tanaman lahan harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error DELETE /api/manager/tanaman-lahan/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menghapus"));
                 }
             });
 

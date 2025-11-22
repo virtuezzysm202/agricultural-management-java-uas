@@ -1,7 +1,9 @@
 package com.farmmanagement.repository;
 
 import java.util.List;
+
 import org.sql2o.Connection;
+
 import com.farmmanagement.config.DatabaseConfig;
 import com.farmmanagement.model.Pembelian;
 
@@ -22,6 +24,23 @@ public class PembelianRepository {
             return conn.createQuery(sql)
                        .addParameter("id", id)
                        .executeAndFetchFirst(Pembelian.class);
+        }
+    }
+
+    // Tambah pembelian baru
+    public boolean insert(Pembelian pembelian) {
+        String sql = "INSERT INTO pembelian (id_pembeli, id_hasil, tanggal, jumlah, total_harga) " +
+                     "VALUES (:id_pembeli, :id_hasil, :tanggal, :jumlah, :total_harga)";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_pembeli", pembelian.getId_pembeli())
+                             .addParameter("id_hasil", pembelian.getId_hasil())
+                             .addParameter("tanggal", pembelian.getTanggal())
+                             .addParameter("jumlah", pembelian.getJumlah())
+                             .addParameter("total_harga", pembelian.getTotal_harga())
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
         }
     }
 
