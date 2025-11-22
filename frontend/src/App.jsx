@@ -4,6 +4,11 @@ import DashboardAdmin from "./pages/DashboardAdmin";
 import TanamanPage from "./pages/TanamanPage";
 import LahanPage from "./pages/LahanPage";
 import ManagerPage from "./pages/ManagerPage";
+import DashboardManager from "./pages/DashboardManager";
+import TanamanLahanPage from "./pages/TanamanLahanPage";
+import HasilPanenPage from "./pages/HasilPanenPage";
+import MonitoringPage from "./pages/MonitoringPage";
+import PembelianPage from "./pages/PembelianPage";
 
 function App() {
   return (
@@ -14,6 +19,7 @@ function App() {
         <Route path="/dashboard/admin/tanaman" element={<TanamanPage />} />
         <Route path="/dashboard/admin/lahan" element={<LahanPage />} />
         <Route path="/dashboard/admin/manajer" element={<ManagerPage />} />
+        <Route path="/dashboard/manager" element={<DashboardManager />} />
       </Routes>
     </BrowserRouter>
   );
