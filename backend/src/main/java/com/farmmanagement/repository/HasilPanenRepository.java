@@ -28,6 +28,30 @@ public class HasilPanenRepository {
         }
     }
 
+    // Tambah hasil panen baru
+    public boolean insert(HasilPanen hasilPanen) {
+        String sql = "INSERT INTO hasil_panen (id_tanaman, id_lahan, id_pengawas, tanggal_panen, " +
+                     "kuantitas, kualitas, harga_satuan, status) " +
+                     "VALUES (:id_tanaman, :id_lahan, :id_pengawas, :tanggal_panen, " +
+                     ":kuantitas, :kualitas, :harga_satuan, :status)";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_tanaman", hasilPanen.getId_tanaman())
+                             .addParameter("id_lahan", hasilPanen.getId_lahan())
+                             .addParameter("id_pengawas", hasilPanen.getId_pengawas())
+                             .addParameter("tanggal_panen", hasilPanen.getTanggal_panen())
+                             .addParameter("kuantitas", hasilPanen.getKuantitas())
+                             .addParameter("kualitas", hasilPanen.getKualitas())
+                             .addParameter("harga_satuan", hasilPanen.getHarga_satuan())
+                             .addParameter("status", hasilPanen.getStatus())
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
+        }
+    }
+
+    
+
     // Update hasil panen berdasarkan ID
     public boolean update(HasilPanen hasilPanen) {
         String sql = "UPDATE hasil_panen SET id_tanaman = :id_tanaman, id_lahan = :id_lahan, " +

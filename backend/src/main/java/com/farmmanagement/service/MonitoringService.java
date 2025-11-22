@@ -1,11 +1,16 @@
 package com.farmmanagement.service;
 
 import java.util.List;
+
 import com.farmmanagement.model.Monitoring;
 import com.farmmanagement.repository.MonitoringRepository;
 
 public class MonitoringService {
     private final MonitoringRepository repo = new MonitoringRepository();
+
+    public boolean addMonitoring(Monitoring monitoring) {
+        return repo.insert(monitoring);
+    }
 
     public List<Monitoring> getAllMonitoring() {
         return repo.findAll();

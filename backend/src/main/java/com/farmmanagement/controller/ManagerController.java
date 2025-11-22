@@ -20,7 +20,12 @@ import static spark.Spark.post;
 import static spark.Spark.put;
 
 public class ManagerController {
-    private static final Gson gson = new GsonBuilder().serializeNulls().create();
+    // Fixed: Added date format to handle java.sql.Date parsing
+    private static final Gson gson = new GsonBuilder()
+            .setDateFormat("yyyy-MM-dd")
+            .serializeNulls()
+            .create();
+            
     private static final HasilPanenService hasilPanenService = new HasilPanenService();
     private static final MonitoringService monitoringService = new MonitoringService();
     private static final TanamanService tanamanService = new TanamanService();
@@ -35,7 +40,85 @@ public class ManagerController {
                 return gson.toJson(Map.of("message", "Welcome to Manager Dashboard", "role", "farmer/manager"));
             });
 
-            // ============= HASIL PANEN OPERATIONS (GET & UPDATE ONLY) =============
+            // ============= HASIL PANEN OPERATIONS (CREATE, GET, UPDATE) =============
+
+           post("/hasil-panen", (req, res) -> {
+                res.type("application/json");
+                try {
+                    System.out.println("Received JSON for hasil-panen: " + req.body()); // Debug line
+                    HasilPanen hasilPanen = gson.fromJson(req.body(), HasilPanen.class);
+                    
+                    // Validation for manager creating hasil panen
+                    if (hasilPanen.getId_tanaman() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID tanaman harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (hasilPanen.getId_lahan() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID lahan harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (hasilPanen.getId_pengawas() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (hasilPanen.getKuantitas() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Kuantitas harus lebih dari 0"));
+                    }
+                    
+                    if (hasilPanen.getHarga_satuan() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Harga satuan harus lebih dari 0"));
+                    }
+                    
+                    if (hasilPanen.getTanggal_panen() == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Tanggal panen tidak boleh kosong"));
+                    }
+                    
+                    if (hasilPanen.getKualitas() == null || hasilPanen.getKualitas().trim().isEmpty()) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Kualitas tidak boleh kosong"));
+                    }
+                    
+                    // Set default status if not provided
+                    if (hasilPanen.getStatus() == null || hasilPanen.getStatus().trim().isEmpty()) {
+                        hasilPanen.setStatus("Menunggu Validasi");
+                    }
+                    
+                    // Validate status values
+                    String status = hasilPanen.getStatus();
+                    if (!status.equals("Menunggu Validasi") && !status.equals("Siap Dijual") && !status.equals("Terjual")) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Status harus 'Menunggu Validasi', 'Siap Dijual', atau 'Terjual'"));
+                    }
+
+                    boolean added = hasilPanenService.addHasilPanen(hasilPanen);
+                    
+                    if (added) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Hasil panen berhasil ditambahkan oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal menambahkan hasil panen"));
+                    
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    System.err.println("JSON Parsing Error (POST hasil-panen): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
+                } catch (Exception e) {
+                    System.err.println("Error POST /api/manager/hasil-panen: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menambah hasil panen"));
+                }
+            });
             
             // GET all hasil panen for manager
             get("/hasil-panen", (req, res) -> {
@@ -113,8 +196,9 @@ public class ManagerController {
                     return gson.toJson(Map.of("error", "ID hasil panen harus berupa angka"));
                 } catch (com.google.gson.JsonSyntaxException e) {
                     System.err.println("JSON Parsing Error (PUT hasil-panen): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
                     res.status(400);
-                    return gson.toJson(Map.of("error", "Format data JSON tidak valid"));
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
                 } catch (Exception e) {
                     System.err.println("Error PUT /api/manager/hasil-panen/:id: " + e.getMessage());
                     res.status(500);
@@ -122,7 +206,59 @@ public class ManagerController {
                 }
             });
 
-            // ============= MONITORING OPERATIONS (GET & UPDATE ONLY) =============
+            // ============= MONITORING OPERATIONS (CREATE, GET, UPDATE) =============
+            
+            // CREATE new monitoring data for manager
+            post("/monitoring", (req, res) -> {
+                res.type("application/json");
+                try {
+                    System.out.println("Received JSON for monitoring: " + req.body()); // Debug line
+                    Monitoring monitoring = gson.fromJson(req.body(), Monitoring.class);
+                    
+                    // Validation for manager creating monitoring
+                    if (monitoring.getId_lahan() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID lahan harus valid (lebih dari 0)"));
+                    }
+                    
+                    if (monitoring.getSuhu() < -50 || monitoring.getSuhu() > 60) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Suhu harus dalam rentang -50°C sampai 60°C"));
+                    }
+                    
+                    if (monitoring.getKelembaban() < 0 || monitoring.getKelembaban() > 100) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Kelembaban harus dalam rentang 0% sampai 100%"));
+                    }
+                    
+                    if (monitoring.getTanggal() == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Tanggal monitoring tidak boleh kosong"));
+                    }
+
+                    boolean added = monitoringService.addMonitoring(monitoring);
+                    
+                    if (added) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Data monitoring berhasil ditambahkan oleh manajer"
+                        ));
+                    }
+                    
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal menambahkan data monitoring"));
+                    
+                } catch (com.google.gson.JsonSyntaxException e) {
+                    System.err.println("JSON Parsing Error (POST monitoring): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
+                } catch (Exception e) {
+                    System.err.println("Error POST /api/manager/monitoring: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error saat menambah monitoring"));
+                }
+            });
             
             // GET all monitoring data for manager
             get("/monitoring", (req, res) -> {
@@ -205,8 +341,9 @@ public class ManagerController {
                     return gson.toJson(Map.of("error", "ID monitoring harus berupa angka"));
                 } catch (com.google.gson.JsonSyntaxException e) {
                     System.err.println("JSON Parsing Error (PUT monitoring): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
                     res.status(400);
-                    return gson.toJson(Map.of("error", "Format data JSON tidak valid"));
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
                 } catch (Exception e) {
                     System.err.println("Error PUT /api/manager/monitoring/:id: " + e.getMessage());
                     res.status(500);
@@ -261,7 +398,6 @@ public class ManagerController {
                 }
             });
 
-
             // ============= TANAMAN LAHAN OPERATIONS (GET & ADD) =============
             
             // GET all tanaman lahan for manager
@@ -313,6 +449,7 @@ public class ManagerController {
             post("/tanaman-lahan", (req, res) -> {
                 res.type("application/json");
                 try {
+                    System.out.println("Received JSON for tanaman-lahan: " + req.body()); // Debug line
                     TanamanLahan tanamanLahan = gson.fromJson(req.body(), TanamanLahan.class);
                     
                     // Validation for manager adding tanaman lahan
@@ -357,8 +494,9 @@ public class ManagerController {
                     
                 } catch (com.google.gson.JsonSyntaxException e) {
                     System.err.println("JSON Parsing Error (POST tanaman-lahan): " + e.getMessage());
+                    System.err.println("Request body: " + req.body());
                     res.status(400);
-                    return gson.toJson(Map.of("error", "Format data JSON tidak valid"));
+                    return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
                 } catch (Exception e) {
                     System.err.println("Error POST /api/manager/tanaman-lahan: " + e.getMessage());
                     res.status(500);
