@@ -2,61 +2,52 @@ package com.farmmanagement.controller;
 
 import java.util.List;
 import java.util.Map;
-
 import com.farmmanagement.model.Tanaman;
 import com.farmmanagement.service.TanamanService;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder; // Import tambahan
-
-import static spark.Spark.delete;
-import static spark.Spark.get;
-import static spark.Spark.path;
-import static spark.Spark.post;
-import static spark.Spark.put;
+import com.google.gson.GsonBuilder;
+import static spark.Spark.*;
 
 public class TanamanController {
 
     private static final TanamanService tanamanService = new TanamanService();
-    
-    // REVISI: Menggunakan GsonBuilder untuk mengatur format tanggal (e.g., "yyyy-MM-dd")
-    // Ini memperbaiki error parsing tanggal seperti '2025-11-13' menjadi java.util.Date/java.sql.Date
     private static final Gson gson = new GsonBuilder()
-            .setDateFormat("yyyy-MM-dd") 
+            .setDateFormat("yyyy-MM-dd")
             .create();
+
+    // Helper untuk cek role
+    private static boolean isManager(String role) {
+        return role != null && role.equalsIgnoreCase("manajer");
+    }
 
     public static void registerRoutes() {
         path("/api/tanaman", () -> {
 
-            // GET semua tanaman
+            // GET semua tanaman (hanya manajer)
             get("", (req, res) -> {
                 res.type("application/json");
-                try {
-                    List<Tanaman> list = tanamanService.getAllTanaman();
-                    return gson.toJson(list);
-                } catch (Exception e) {
-                    System.err.println("Error GET /api/tanaman: " + e.getMessage());
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Gagal mengambil data tanaman dari database."));
+                String role = req.headers("Role");
+                if (!isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak. Hanya manajer yang dapat melihat tanaman."));
                 }
+                List<Tanaman> list = tanamanService.getAllTanaman();
+                return gson.toJson(list);
             });
 
-            // GET by id
+            // GET tanaman by ID (hanya manajer)
             get("/:id", (req, res) -> {
                 res.type("application/json");
-                try {
-                    int id = Integer.parseInt(req.params("id"));
-                    Tanaman t = tanamanService.getTanamanById(id);
-                    if (t != null) return gson.toJson(t);
-                    res.status(404);
-                    return gson.toJson(Map.of("error", "Tanaman tidak ditemukan"));
-                } catch (NumberFormatException e) {
-                    res.status(400); // Bad Request jika ID bukan angka
-                    return gson.toJson(Map.of("error", "ID tanaman harus berupa angka."));
-                } catch (Exception e) {
-                    System.err.println("Error GET /api/tanaman/:id: " + e.getMessage());
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Internal Server Error."));
+                String role = req.headers("Role");
+                if (!isManager(role)) {
+                    res.status(403);
+                    return gson.toJson(Map.of("error", "Akses ditolak. Hanya manajer yang dapat melihat tanaman."));
                 }
+                int id = Integer.parseInt(req.params("id"));
+                Tanaman t = tanamanService.getTanamanById(id);
+                if (t != null) return gson.toJson(t);
+                res.status(404);
+                return gson.toJson(Map.of("error", "Tanaman tidak ditemukan"));
             });
 
             // POST tambah tanaman
@@ -168,3 +159,4 @@ public class TanamanController {
         });
     }
 }
+

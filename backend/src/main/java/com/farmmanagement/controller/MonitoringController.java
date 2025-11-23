@@ -20,7 +20,7 @@ public class MonitoringController {
     }
 
     private static boolean isManager(String role) {
-        return role != null && role.equalsIgnoreCase("manager");
+        return role != null && role.equalsIgnoreCase("manajer");
     }
 
     public static void registerRoutes() {

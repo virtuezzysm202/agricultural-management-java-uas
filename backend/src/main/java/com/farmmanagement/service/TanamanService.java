@@ -6,6 +6,7 @@ import com.farmmanagement.model.Tanaman;
 import com.farmmanagement.repository.TanamanRepository;
 
 public class TanamanService {
+
     private final TanamanRepository repo = new TanamanRepository();
 
     public List<Tanaman> getAllTanaman() {
