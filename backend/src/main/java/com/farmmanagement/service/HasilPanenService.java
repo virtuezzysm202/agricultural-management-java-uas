@@ -8,6 +8,11 @@ import com.farmmanagement.repository.HasilPanenRepository;
 public class HasilPanenService {
     private final HasilPanenRepository repo = new HasilPanenRepository();
 
+    public boolean addHasilPanen(HasilPanen hasilPanen) {
+        // Tambahkan validasi jika diperlukan
+        return repo.insert(hasilPanen);
+    }
+
     public List<HasilPanen> getAllHasilPanen() {
         return repo.findAll();
     }

@@ -78,6 +78,11 @@ public class TanamanController {
                          return gson.toJson(Map.of("error", "Nama tanaman tidak boleh kosong."));
                     }
                     
+                    if (t.getJumlah_tanaman() < 0) {
+                         res.status(400);
+                         return gson.toJson(Map.of("error", "Jumlah tanaman tidak boleh negatif."));
+                    }
+                    
                     boolean ok = tanamanService.addTanaman(t);
                     
                     if (ok) {
@@ -116,6 +121,11 @@ public class TanamanController {
                     if (t.getNama_tanaman() == null || t.getNama_tanaman().isEmpty()) {
                          res.status(400);
                          return gson.toJson(Map.of("error", "Nama tanaman tidak boleh kosong."));
+                    }
+                    
+                    if (t.getJumlah_tanaman() < 0) {
+                         res.status(400);
+                         return gson.toJson(Map.of("error", "Jumlah tanaman tidak boleh negatif."));
                     }
                     
                     boolean ok = tanamanService.updateTanaman(t);

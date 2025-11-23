@@ -1,7 +1,9 @@
 package com.farmmanagement.repository;
 
 import java.util.List;
+
 import org.sql2o.Connection;
+
 import com.farmmanagement.config.DatabaseConfig;
 import com.farmmanagement.model.Monitoring;
 
@@ -22,6 +24,22 @@ public class MonitoringRepository {
             return conn.createQuery(sql)
                        .addParameter("id", id)
                        .executeAndFetchFirst(Monitoring.class);
+        }
+    }
+
+    // Tambah monitoring baru
+    public boolean insert(Monitoring monitoring) {
+        String sql = "INSERT INTO monitoring (id_lahan, suhu, kelembaban, tanggal) " +
+                     "VALUES (:id_lahan, :suhu, :kelembaban, :tanggal)";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_lahan", monitoring.getId_lahan())
+                             .addParameter("suhu", monitoring.getSuhu())
+                             .addParameter("kelembaban", monitoring.getKelembaban())
+                             .addParameter("tanggal", monitoring.getTanggal())
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
         }
     }
 

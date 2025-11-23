@@ -29,12 +29,13 @@ public class TanamanRepository {
 
     //  Tambah tanaman baru
     public boolean save(Tanaman tanaman) {
-        String sql = "INSERT INTO tanaman (nama_tanaman, jenis, waktu_tanam) VALUES (:nama_tanaman, :jenis, :waktu_tanam)";
+        String sql = "INSERT INTO tanaman (nama_tanaman, jenis, waktu_tanam, jumlah_tanaman) VALUES (:nama_tanaman, :jenis, :waktu_tanam, :jumlah_tanaman)";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("nama_tanaman", tanaman.getNama_tanaman())
                              .addParameter("jenis", tanaman.getJenis())
                              .addParameter("waktu_tanam", tanaman.getWaktu_tanam())
+                             .addParameter("jumlah_tanaman", tanaman.getJumlah_tanaman())
                              .executeUpdate()
                              .getResult();
             return result > 0;
@@ -43,13 +44,14 @@ public class TanamanRepository {
 
     //  Update tanaman berdasarkan ID
     public boolean update(Tanaman tanaman) {
-        String sql = "UPDATE tanaman SET nama_tanaman = :nama_tanaman, jenis = :jenis, waktu_tanam = :waktu_tanam WHERE id_tanaman = :id_tanaman";
+        String sql = "UPDATE tanaman SET nama_tanaman = :nama_tanaman, jenis = :jenis, waktu_tanam = :waktu_tanam, jumlah_tanaman = :jumlah_tanaman WHERE id_tanaman = :id_tanaman";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_tanaman", tanaman.getId_tanaman())
                              .addParameter("nama_tanaman", tanaman.getNama_tanaman())
                              .addParameter("jenis", tanaman.getJenis())
                              .addParameter("waktu_tanam", tanaman.getWaktu_tanam())
+                             .addParameter("jumlah_tanaman", tanaman.getJumlah_tanaman())
                              .executeUpdate()
                              .getResult();
             return result > 0;
@@ -62,6 +64,19 @@ public class TanamanRepository {
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id", id)
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
+        }
+    }
+
+    // Decrease jumlah_tanaman by a specific amount
+    public boolean decreaseJumlahTanaman(int idTanaman, int amount) {
+        String sql = "UPDATE tanaman SET jumlah_tanaman = jumlah_tanaman - :amount WHERE id_tanaman = :id_tanaman AND jumlah_tanaman >= :amount";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_tanaman", idTanaman)
+                             .addParameter("amount", amount)
                              .executeUpdate()
                              .getResult();
             return result > 0;

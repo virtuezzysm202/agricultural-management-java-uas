@@ -1,7 +1,6 @@
 package com.farmmanagement.model;
 
-// Tidak perlu java.sql.Date karena Lahan tidak punya kolom tanggal
-// Asumsi 'luas' menggunakan tipe data double/float di Java untuk DECIMAL di DB
+import java.sql.Timestamp;
 
 public class Lahan {
     private int id_lahan;
@@ -9,15 +8,17 @@ public class Lahan {
     private double luas; // Menggunakan double/float untuk menampung data desimal (luas)
     private String lokasi;
     private int id_pengawas; // Foreign Key
+    private Timestamp created_at;
 
     public Lahan() {}
 
-    public Lahan(int id_lahan, String nama_lahan, double luas, String lokasi, int id_pengawas) {
+    public Lahan(int id_lahan, String nama_lahan, double luas, String lokasi, int id_pengawas, Timestamp created_at) {
         this.id_lahan = id_lahan;
         this.nama_lahan = nama_lahan;
         this.luas = luas;
         this.lokasi = lokasi;
         this.id_pengawas = id_pengawas;
+        this.created_at = created_at;
     }
 
     // Getter & Setter
@@ -59,5 +60,13 @@ public class Lahan {
 
     public void setId_pengawas(int id_pengawas) {
         this.id_pengawas = id_pengawas;
+    }
+
+    public Timestamp getCreated_at() {
+        return created_at;
+    }
+
+    public void setCreated_at(Timestamp created_at) {
+        this.created_at = created_at;
     }
 }

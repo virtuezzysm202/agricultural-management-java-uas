@@ -1,11 +1,17 @@
 package com.farmmanagement.service;
 
 import java.util.List;
+
 import com.farmmanagement.model.Pembelian;
 import com.farmmanagement.repository.PembelianRepository;
 
 public class PembelianService {
     private final PembelianRepository repo = new PembelianRepository();
+
+    // ADDED: Method untuk menambah pembelian
+    public boolean addPembelian(Pembelian pembelian) {
+        return repo.insert(pembelian);
+    }
 
     public List<Pembelian> getAllPembelian() {
         return repo.findAll();

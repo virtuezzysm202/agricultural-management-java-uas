@@ -2,11 +2,16 @@ package com.farmmanagement.controller;
 
 import java.util.List;
 import java.util.Map;
+
 import com.farmmanagement.model.TanamanLahan;
 import com.farmmanagement.service.TanamanLahanService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import static spark.Spark.*;
+
+import static spark.Spark.delete;
+import static spark.Spark.get;
+import static spark.Spark.path;
+import static spark.Spark.put;
 
 public class TanamanLahanController {
     private static final TanamanLahanService tanamanLahanService = new TanamanLahanService();
@@ -58,6 +63,11 @@ public class TanamanLahanController {
                     if (tanamanLahan.getStatus() == null || tanamanLahan.getStatus().isEmpty()) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Data tanaman lahan tidak lengkap atau tidak valid."));
+                    }
+
+                    if (tanamanLahan.getId_pengawas() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas harus diisi dan valid."));
                     }
 
                     boolean ok = tanamanLahanService.updateTanamanLahan(tanamanLahan);
