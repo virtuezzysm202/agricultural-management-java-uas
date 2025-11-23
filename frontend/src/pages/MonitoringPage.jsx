@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -23,6 +24,7 @@ ChartJS.register(
 );
 
 export default function MonitoringPage() {
+  const navigate = useNavigate();
   const [monitoring, setMonitoring] = useState([]);
   const [lahans, setLahans] = useState([]);
   const [form, setForm] = useState({
@@ -35,27 +37,39 @@ export default function MonitoringPage() {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const API_BASE = "http://localhost:4567/api/manager";
-
   const fetchMonitoring = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/monitoring`);
+      const res = await api.get("/manager/monitoring");
       setMonitoring(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data monitoring:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchLahans = async () => {
     try {
-      const res = await axios.get("http://localhost:4567/api/lahan");
+      const res = await api.get("/lahan");
       setLahans(res.data || []);
     } catch (err) {
       console.error("Gagal memuat data lahan:", err);
+      // Don't redirect on lahan error, just log it
+      console.log("Lahan data unavailable, user can input ID manually");
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      navigate("/");
+      return;
+    }
+
     fetchMonitoring();
     fetchLahans();
   }, []);
@@ -78,10 +92,10 @@ export default function MonitoringPage() {
       };
 
       if (isEditing) {
-        await axios.put(`${API_BASE}/monitoring/${form.id_monitor}`, dataToSubmit);
+        await api.put(`/manager/monitoring/${form.id_monitor}`, dataToSubmit);
         alert("Data monitoring berhasil diupdate!");
       } else {
-        await axios.post(`${API_BASE}/monitoring`, dataToSubmit);
+        await api.post("/manager/monitoring", dataToSubmit);
         alert("Data monitoring berhasil ditambahkan!");
       }
 
@@ -96,7 +110,13 @@ export default function MonitoringPage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Gagal menyimpan data:", err);
-      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -116,12 +136,18 @@ export default function MonitoringPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus data monitoring ini?")) return;
     try {
-      await axios.delete(`${API_BASE}/monitoring/${id}`);
+      await api.delete(`/manager/monitoring/${id}`);
       alert("Data monitoring berhasil dihapus!");
       fetchMonitoring();
     } catch (err) {
       console.error("Gagal menghapus data:", err);
-      alert("Gagal menghapus data.");
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menghapus data.");
+      }
     }
   };
 
@@ -184,12 +210,12 @@ export default function MonitoringPage() {
               </p>
             </div>
           </div>
-          <a
-            href="/dashboard/manager"
+          <button
+            onClick={() => navigate("/dashboard/manager")}
             className="text-sm px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             Kembali ke Dashboard
-          </a>
+          </button>
         </div>
       </header>
 
@@ -227,22 +253,22 @@ export default function MonitoringPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    Lahan
+                    ID Lahan
                   </label>
-                  <select
+                  <input
+                    type="number"
                     name="id_lahan"
                     value={form.id_lahan}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    placeholder="Masukkan ID Lahan"
                     required
-                  >
-                    <option value="">Pilih Lahan</option>
-                    {lahans.map((l) => (
-                      <option key={l.id_lahan} value={l.id_lahan}>
-                        {l.nama_lahan} - {l.lokasi}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {lahans.length > 0 && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Lahan tersedia: {lahans.map(l => `${l.id_lahan} (${l.nama_lahan})`).join(', ')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">

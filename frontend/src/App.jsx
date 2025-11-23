@@ -9,6 +9,7 @@ import TanamanLahanPage from "./pages/TanamanLahanPage";
 import HasilPanenPage from "./pages/HasilPanenPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import PembelianPage from "./pages/PembelianPage";
+import DashboardBuyer from "./pages/DashboardBuyer";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
         <Route path="/dashboard/manager/hasil-panen" element={<HasilPanenPage />} />
         <Route path="/dashboard/manager/monitoring" element={<MonitoringPage />} />
         <Route path="/dashboard/manager/pembelian" element={<PembelianPage />} />
+        <Route path="/dashboard/buyer" element={<DashboardBuyer />} />
       </Routes>
     </BrowserRouter>
   );

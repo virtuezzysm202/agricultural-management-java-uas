@@ -3,7 +3,9 @@ package com.farmmanagement.controller;
 import java.util.List;
 import java.util.Map;
 
+import com.farmmanagement.model.HasilPanen;
 import com.farmmanagement.model.Pembelian;
+import com.farmmanagement.service.HasilPanenService;
 import com.farmmanagement.service.PembelianService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,6 +21,8 @@ public class BuyerController {
         .create();
 
     private static final PembelianService pembelianService = new PembelianService();
+    private static final HasilPanenService hasilPanenService = new HasilPanenService();
+
 
     public static void registerRoutes() {
         path("/api/pembeli", () -> {
@@ -129,6 +133,53 @@ public class BuyerController {
                     return gson.toJson(Map.of("error", "Internal Server Error"));
                 }
             });
+
+            // GET all hasil panen
+            get("/hasil-panen", (req, res) -> {
+                res.type("application/json");
+                try {
+                    List<HasilPanen> list = hasilPanenService.getAllHasilPanen();
+                    return gson.toJson(Map.of(
+                        "status", "success",
+                        "message", "Daftar hasil panen berhasil diambil",
+                        "data", list
+                    ));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/pembeli/hasil-panen: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Gagal mengambil data hasil panen"));
+                }
+            });
+
+            // GET hasil panen by ID
+            get("/hasil-panen/:id", (req, res) -> {
+                res.type("application/json");
+                try {
+                    int id = Integer.parseInt(req.params("id"));
+                    HasilPanen hasilPanen = hasilPanenService.getHasilPanenById(id);
+                    
+                    if (hasilPanen != null) {
+                        return gson.toJson(Map.of(
+                            "status", "success",
+                            "message", "Hasil panen ditemukan",
+                            "data", hasilPanen
+                        ));
+                    }
+                    
+                    res.status(404);
+                    return gson.toJson(Map.of("error", "Hasil panen tidak ditemukan"));
+                    
+                } catch (NumberFormatException e) {
+                    res.status(400);
+                    return gson.toJson(Map.of("error", "ID hasil panen harus berupa angka"));
+                } catch (Exception e) {
+                    System.err.println("Error GET /api/pembeli/hasil-panen/:id: " + e.getMessage());
+                    res.status(500);
+                    return gson.toJson(Map.of("error", "Internal Server Error"));
+                }
+            });
+
+
         });
         
     }

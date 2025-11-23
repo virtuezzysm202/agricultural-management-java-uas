@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../services/api";
+import axios from "axios";
 
 // Toolbar kecil di atas tabel
 function TableToolbar({ title, onRefresh }) {
@@ -44,8 +43,6 @@ function SimpleModal({ open, onClose, title, children }) {
 }
 
 export default function DashboardManager() {
-  const navigate = useNavigate();
-  
   // ======= STATE DATA =======
   const [harvests, setHarvests] = useState([]); // hasil_panen
   const [lahans, setLahans] = useState([]); // tanaman_lahan
@@ -67,19 +64,18 @@ export default function DashboardManager() {
     t: false,
   });
 
+  // ======= API BASE URL =======
+  const API_BASE = "http://localhost:4567/api/manager";
+  const API_PEMBELIAN = "http://localhost:4567/api/manager/pembelian";
+
   // ======= FETCH FUNCTIONS =======
   const loadHarvests = async () => {
     setLoading((prev) => ({ ...prev, h: true }));
     try {
-      const res = await api.get("/manager/hasil-panen");
+      const res = await axios.get(`${API_BASE}/hasil-panen`);
       setHarvests(res.data.data || []);
     } catch (err) {
       console.error("Error loading harvests:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
       setHarvests([]);
     } finally {
       setLoading((prev) => ({ ...prev, h: false }));
@@ -89,15 +85,10 @@ export default function DashboardManager() {
   const loadLahans = async () => {
     setLoading((prev) => ({ ...prev, l: true }));
     try {
-      const res = await api.get("/manager/tanaman-lahan");
+      const res = await axios.get(`${API_BASE}/tanaman-lahan`);
       setLahans(res.data.data || []);
     } catch (err) {
       console.error("Error loading tanaman lahan:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
       setLahans([]);
     } finally {
       setLoading((prev) => ({ ...prev, l: false }));
@@ -107,15 +98,10 @@ export default function DashboardManager() {
   const loadMonitors = async () => {
     setLoading((prev) => ({ ...prev, m: true }));
     try {
-      const res = await api.get("/manager/monitoring");
+      const res = await axios.get(`${API_BASE}/monitoring`);
       setMonitors(res.data.data || []);
     } catch (err) {
       console.error("Error loading monitoring:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
       setMonitors([]);
     } finally {
       setLoading((prev) => ({ ...prev, m: false }));
@@ -125,15 +111,10 @@ export default function DashboardManager() {
   const loadPurchases = async () => {
     setLoading((prev) => ({ ...prev, p: true }));
     try {
-      const res = await api.get("/manager/pembelian");
+      const res = await axios.get(API_PEMBELIAN);
       setPurchases(res.data.data || []);
     } catch (err) {
       console.error("Error loading pembelian:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
       setPurchases([]);
     } finally {
       setLoading((prev) => ({ ...prev, p: false }));
@@ -143,30 +124,18 @@ export default function DashboardManager() {
   const loadTanamans = async () => {
     setLoading((prev) => ({ ...prev, t: true }));
     try {
-      const res = await api.get("/manager/tanaman");
+      const res = await axios.get(`${API_BASE}/tanaman`);
       setTanamans(res.data.data || []);
     } catch (err) {
       console.error("Error loading tanaman:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      }
       setTanamans([]);
     } finally {
       setLoading((prev) => ({ ...prev, t: false }));
     }
   };
 
-  // Check authentication on mount
+  // initial load
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("Please login first");
-      navigate("/");
-      return;
-    }
-    
     loadHarvests();
     loadLahans();
     loadMonitors();
@@ -186,12 +155,12 @@ export default function DashboardManager() {
     
     try {
       let endpoint = "";
-      if (type === "harvest") endpoint = `/manager/hasil-panen/${id}`;
-      else if (type === "lahan") endpoint = `/manager/tanaman-lahan/${id}`;
-      else if (type === "monitor") endpoint = `/manager/monitoring/${id}`;
-      else if (type === "purchase") endpoint = `/manager/pembelian/${id}`;
+      if (type === "harvest") endpoint = `${API_BASE}/hasil-panen/${id}`;
+      else if (type === "lahan") endpoint = `${API_BASE}/tanaman-lahan/${id}`;
+      else if (type === "monitor") endpoint = `${API_BASE}/monitoring/${id}`;
+      else if (type === "purchase") endpoint = `${API_PEMBELIAN}/${id}`;
 
-      await api.delete(endpoint);
+      await axios.delete(endpoint);
       alert("Data berhasil dihapus");
 
       // Reload
@@ -200,14 +169,7 @@ export default function DashboardManager() {
       else if (type === "monitor") loadMonitors();
       else if (type === "purchase") loadPurchases();
     } catch (err) {
-      console.error("Delete error:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      } else {
-        alert("Gagal menghapus data: " + (err.response?.data?.error || err.message));
-      }
+      alert("Gagal menghapus data: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -216,11 +178,11 @@ export default function DashboardManager() {
       if (editType === "harvest") {
         if (current.id_hasil) {
           // Update
-          await api.put(`/manager/hasil-panen/${current.id_hasil}`, current);
+          await axios.put(`${API_BASE}/hasil-panen/${current.id_hasil}`, current);
           alert("Hasil panen berhasil diupdate");
         } else {
           // Create
-          await api.post("/manager/hasil-panen", current);
+          await axios.post(`${API_BASE}/hasil-panen`, current);
           alert("Hasil panen berhasil ditambahkan");
         }
         loadHarvests();
@@ -229,45 +191,33 @@ export default function DashboardManager() {
           alert("Update tanaman lahan belum tersedia");
         } else {
           // Create
-          await api.post("/manager/tanaman-lahan", current);
+          await axios.post(`${API_BASE}/tanaman-lahan`, current);
           alert("Tanaman lahan berhasil ditambahkan");
         }
         loadLahans();
       } else if (editType === "monitor") {
         if (current.id_monitor) {
           // Update
-          await api.put(`/manager/monitoring/${current.id_monitor}`, current);
+          await axios.put(`${API_BASE}/monitoring/${current.id_monitor}`, current);
           alert("Monitoring berhasil diupdate");
         } else {
           // Create
-          await api.post("/manager/monitoring", current);
+          await axios.post(`${API_BASE}/monitoring`, current);
           alert("Monitoring berhasil ditambahkan");
         }
         loadMonitors();
       } else if (editType === "purchase") {
         if (current.id_pembelian) {
           // Update
-          await api.put(`/manager/pembelian/${current.id_pembelian}`, current);
+          await axios.put(`${API_PEMBELIAN}/${current.id_pembelian}`, current);
           alert("Pembelian berhasil diupdate");
         }
         loadPurchases();
       }
       setEditOpen(false);
     } catch (err) {
-      console.error("Save error:", err);
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        alert("Session expired or unauthorized. Please login again.");
-        localStorage.removeItem("token");
-        navigate("/");
-      } else {
-        alert("Gagal menyimpan: " + (err.response?.data?.error || err.message));
-      }
+      alert("Gagal menyimpan: " + (err.response?.data?.error || err.message));
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
   };
 
   // ======= PERHITUNGAN STATS =======
@@ -295,49 +245,11 @@ export default function DashboardManager() {
               </p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Quick Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            to="/dashboard/manager/tanaman-lahan"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🌱</span>
-            <p className="mt-2 text-sm font-semibold">Tanaman Lahan</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/hasil-panen"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🌾</span>
-            <p className="mt-2 text-sm font-semibold">Hasil Panen</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/monitoring"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">📊</span>
-            <p className="mt-2 text-sm font-semibold">Monitoring</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/pembelian"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🛒</span>
-            <p className="mt-2 text-sm font-semibold">Pembelian</p>
-          </Link>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
@@ -421,7 +333,7 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    harvests.slice(0, 5).map((h) => (
+                    harvests.map((h) => (
                       <tr
                         key={h.id_hasil}
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -463,14 +375,6 @@ export default function DashboardManager() {
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-3 text-center">
-              <Link
-                to="/dashboard/manager/hasil-panen"
-                className="text-sm text-green-600 hover:text-green-700 font-medium"
-              >
-                Lihat Semua →
-              </Link>
             </div>
           </div>
 
@@ -514,7 +418,7 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    lahans.slice(0, 5).map((l) => (
+                    lahans.map((l) => (
                       <tr
                         key={l.id_tl}
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -541,14 +445,6 @@ export default function DashboardManager() {
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-3 text-center">
-              <Link
-                to="/dashboard/manager/tanaman-lahan"
-                className="text-sm text-green-600 hover:text-green-700 font-medium"
-              >
-                Lihat Semua →
-              </Link>
             </div>
           </div>
 
@@ -592,7 +488,7 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    monitors.slice(0, 5).map((m) => (
+                    monitors.map((m) => (
                       <tr
                         key={m.id_monitor}
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -621,14 +517,6 @@ export default function DashboardManager() {
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-3 text-center">
-              <Link
-                to="/dashboard/manager/monitoring"
-                className="text-sm text-green-600 hover:text-green-700 font-medium"
-              >
-                Lihat Semua →
-              </Link>
             </div>
           </div>
 
@@ -662,7 +550,7 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    purchases.slice(0, 5).map((p) => (
+                    purchases.map((p) => (
                       <tr
                         key={p.id_pembelian}
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -694,14 +582,6 @@ export default function DashboardManager() {
                   )}
                 </tbody>
               </table>
-            </div>
-            <div className="mt-3 text-center">
-              <Link
-                to="/dashboard/manager/pembelian"
-                className="text-sm text-green-600 hover:text-green-700 font-medium"
-              >
-                Lihat Semua →
-              </Link>
             </div>
           </div>
         </div>

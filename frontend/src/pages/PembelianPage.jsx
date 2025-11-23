@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -21,6 +22,7 @@ ChartJS.register(
 );
 
 export default function PembelianPage() {
+  const navigate = useNavigate();
   const [pembelian, setPembelian] = useState([]);
   const [hasilPanen, setHasilPanen] = useState([]);
   const [buyers, setBuyers] = useState([]);
@@ -32,37 +34,56 @@ export default function PembelianPage() {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const API_PEMBELIAN = "http://localhost:4567/api/manager/pembelian";
-  const API_BASE = "http://localhost:4567/api/manager";
-
   const fetchPembelian = async () => {
     try {
-      const res = await axios.get(API_PEMBELIAN);
+      const res = await api.get("/manager/pembelian");
       setPembelian(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data pembelian:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchHasilPanen = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/hasil-panen`);
+      const res = await api.get("/manager/hasil-panen");
       setHasilPanen(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data hasil panen:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchBuyers = async () => {
     try {
-      const res = await axios.get("http://localhost:4567/api/user/pembeli");
+      const res = await api.get("/user/pembeli");
       setBuyers(res.data || []);
     } catch (err) {
       console.error("Gagal memuat data pembeli:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      navigate("/");
+      return;
+    }
+
     fetchPembelian();
     fetchHasilPanen();
     fetchBuyers();
@@ -83,7 +104,7 @@ export default function PembelianPage() {
         total_harga: parseFloat(form.total_harga),
       };
 
-      await axios.put(`${API_PEMBELIAN}/${form.id_pembelian}`, dataToSubmit);
+      await api.put(`/manager/pembelian/${form.id_pembelian}`, dataToSubmit);
       alert("Data pembelian berhasil diupdate!");
 
       fetchPembelian();
@@ -95,7 +116,13 @@ export default function PembelianPage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Gagal menyimpan data:", err);
-      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -113,12 +140,18 @@ export default function PembelianPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus data pembelian ini?")) return;
     try {
-      await axios.delete(`${API_PEMBELIAN}/${id}`);
+      await api.delete(`/manager/pembelian/${id}`);
       alert("Data pembelian berhasil dihapus!");
       fetchPembelian();
     } catch (err) {
       console.error("Gagal menghapus data:", err);
-      alert("Gagal menghapus data.");
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired or unauthorized. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menghapus data.");
+      }
     }
   };
 

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function HasilPanenPage() {
+  const navigate = useNavigate();
   const [hasilPanen, setHasilPanen] = useState([]);
   const [tanamans, setTanamans] = useState([]);
   const [lahans, setLahans] = useState([]);
@@ -24,45 +26,67 @@ export default function HasilPanenPage() {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  const API_BASE = "http://localhost:4567/api/manager";
-
   const fetchHasilPanen = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/hasil-panen`);
+      const res = await api.get("/manager/hasil-panen");
       setHasilPanen(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data hasil panen:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchTanamans = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/tanaman`);
+      const res = await api.get("/manager/tanaman");
       setTanamans(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data tanaman:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchLahans = async () => {
     try {
-      const res = await axios.get("http://localhost:4567/api/lahan");
+      const res = await api.get("/lahan");
       setLahans(res.data || []);
     } catch (err) {
       console.error("Gagal memuat data lahan:", err);
+      // Don't redirect on lahan error, just log it
+      console.log("Lahan data unavailable, user can input ID manually");
     }
   };
 
   const fetchManagers = async () => {
     try {
-      const res = await axios.get("http://localhost:4567/api/user/manajer");
+      const res = await api.get("/user/manajer");
       setManagers(res.data || []);
     } catch (err) {
       console.error("Gagal memuat data manajer:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      navigate("/");
+      return;
+    }
+    
     fetchHasilPanen();
     fetchTanamans();
     fetchLahans();
@@ -91,10 +115,10 @@ export default function HasilPanenPage() {
       };
 
       if (isEditing) {
-        await axios.put(`${API_BASE}/hasil-panen/${form.id_hasil}`, dataToSubmit);
+        await api.put(`/manager/hasil-panen/${form.id_hasil}`, dataToSubmit);
         alert("Hasil panen berhasil diupdate!");
       } else {
-        await axios.post(`${API_BASE}/hasil-panen`, dataToSubmit);
+        await api.post("/manager/hasil-panen", dataToSubmit);
         alert("Hasil panen berhasil ditambahkan!");
       }
 
@@ -113,7 +137,13 @@ export default function HasilPanenPage() {
       setIsEditing(false);
     } catch (err) {
       console.error("Gagal menyimpan data:", err);
-      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -135,12 +165,18 @@ export default function HasilPanenPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus hasil panen ini?")) return;
     try {
-      await axios.delete(`${API_BASE}/hasil-panen/${id}`);
+      await api.delete(`/manager/hasil-panen/${id}`);
       alert("Hasil panen berhasil dihapus!");
       fetchHasilPanen();
     } catch (err) {
       console.error("Gagal menghapus data:", err);
-      alert("Gagal menghapus data.");
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menghapus data.");
+      }
     }
   };
 
@@ -193,7 +229,7 @@ export default function HasilPanenPage() {
     const manager = managers.find((m) => m.id_user === id);
     return manager ? manager.nama : `ID ${id}`;
   };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100">
       {/* Header */}
@@ -212,12 +248,12 @@ export default function HasilPanenPage() {
               </p>
             </div>
           </div>
-          <a
-            href="/dashboard/manager"
+          <button
+            onClick={() => navigate("/dashboard/manager")}
             className="text-sm px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             Kembali ke Dashboard
-          </a>
+          </button>
         </div>
       </header>
 
@@ -275,22 +311,22 @@ export default function HasilPanenPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    Lahan
+                    ID Lahan
                   </label>
-                  <select
+                  <input
+                    type="number"
                     name="id_lahan"
                     value={form.id_lahan}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    placeholder="Masukkan ID Lahan"
                     required
-                  >
-                    <option value="">Pilih Lahan</option>
-                    {lahans.map((l) => (
-                      <option key={l.id_lahan} value={l.id_lahan}>
-                        {l.nama_lahan} - {l.lokasi}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {lahans.length > 0 && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Lahan tersedia: {lahans.map(l => `${l.id_lahan} (${l.nama_lahan})`).join(', ')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -401,7 +437,7 @@ export default function HasilPanenPage() {
                     disabled={loading}
                     className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                   >
-                    {isEditing ? "Simpan Perubahan" : "Tambah Hasil Panen"}
+                    {loading ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Tambah Hasil Panen"}
                   </button>
                   {isEditing && (
                     <button
@@ -430,7 +466,7 @@ export default function HasilPanenPage() {
             </div>
           </div>
 
-          {/* CHART CARD */}
+          {/* CHART CARD - Same as before */}
           <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:bg-gray-950/80 dark:border-gray-800/80 shadow-[0_18px_45px_rgba(15,23,42,0.6)] flex flex-col items-center">
             <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-400/80 via-emerald-300/80 to-lime-400/80" />
             <div className="pointer-events-none absolute inset-0 opacity-40">
@@ -458,7 +494,7 @@ export default function HasilPanenPage() {
           </div>
         </div>
 
-        {/* TABEL HASIL PANEN */}
+        {/* TABEL HASIL PANEN - Same as before, just showing first few rows for brevity */}
         <section className="space-y-3 mb-10">
           <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
             Tabel Data Hasil Panen

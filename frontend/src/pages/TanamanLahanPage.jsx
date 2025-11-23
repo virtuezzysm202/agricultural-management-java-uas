@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function TanamanLahanPage() {
+  const navigate = useNavigate();
   const [tanamanLahan, setTanamanLahan] = useState([]);
   const [tanamans, setTanamans] = useState([]);
   const [lahans, setLahans] = useState([]);
@@ -17,38 +19,58 @@ export default function TanamanLahanPage() {
     status: "tumbuh",
   });
   const [loading, setLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-
-  const API_BASE = "http://localhost:4567/api/manager";
 
   const fetchTanamanLahan = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/tanaman-lahan`);
+      const res = await api.get("/manager/tanaman-lahan");
       setTanamanLahan(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data tanaman lahan:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchTanamans = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/tanaman`);
+      const res = await api.get("/manager/tanaman");
       setTanamans(res.data.data || []);
     } catch (err) {
       console.error("Gagal memuat data tanaman:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   const fetchLahans = async () => {
     try {
-      const res = await axios.get("http://localhost:4567/api/lahan");
+      // Try manager endpoint first, fall back to lahan if needed
+      const res = await api.get("/lahan");
       setLahans(res.data || []);
     } catch (err) {
       console.error("Gagal memuat data lahan:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      }
     }
   };
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first");
+      navigate("/");
+      return;
+    }
+    
     fetchTanamanLahan();
     fetchTanamans();
     fetchLahans();
@@ -70,7 +92,7 @@ export default function TanamanLahanPage() {
         status: form.status,
       };
 
-      await axios.post(`${API_BASE}/tanaman-lahan`, dataToSubmit);
+      await api.post("/manager/tanaman-lahan", dataToSubmit);
       alert("Tanaman lahan berhasil ditambahkan!");
       fetchTanamanLahan();
       setForm({
@@ -80,10 +102,15 @@ export default function TanamanLahanPage() {
         tanggal_tanam: "",
         status: "tumbuh",
       });
-      setIsEditing(false);
     } catch (err) {
       console.error("Gagal menyimpan data:", err);
-      alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menyimpan data: " + (err.response?.data?.error || err.message));
+      }
     } finally {
       setLoading(false);
     }
@@ -92,12 +119,18 @@ export default function TanamanLahanPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus tanaman lahan ini?")) return;
     try {
-      await axios.delete(`${API_BASE}/tanaman-lahan/${id}`);
+      await api.delete(`/manager/tanaman-lahan/${id}`);
       alert("Tanaman lahan berhasil dihapus!");
       fetchTanamanLahan();
     } catch (err) {
       console.error("Gagal menghapus data:", err);
-      alert("Gagal menghapus data.");
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        navigate("/");
+      } else {
+        alert("Gagal menghapus data.");
+      }
     }
   };
 
@@ -164,12 +197,12 @@ export default function TanamanLahanPage() {
               </p>
             </div>
           </div>
-          <a
-            href="/dashboard/manager"
+          <button
+            onClick={() => navigate("/dashboard/manager")}
             className="text-sm px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             Kembali ke Dashboard
-          </a>
+          </button>
         </div>
       </header>
 
@@ -204,25 +237,25 @@ export default function TanamanLahanPage() {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                    Lahan
+                    ID Lahan
                   </label>
-                  <select
+                  <input
+                    type="number"
                     name="id_lahan"
                     value={form.id_lahan}
                     onChange={handleChange}
                     className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    placeholder="Masukkan ID Lahan"
                     required
-                  >
-                    <option value="">Pilih Lahan</option>
-                    {lahans.map((l) => (
-                      <option key={l.id_lahan} value={l.id_lahan}>
-                        {l.nama_lahan} - {l.lokasi}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  {lahans.length > 0 && (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Lahan tersedia: {lahans.map(l => `${l.id_lahan} (${l.nama_lahan})`).join(', ')}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -282,7 +315,7 @@ export default function TanamanLahanPage() {
                     disabled={loading}
                     className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                   >
-                    Tambah Tanaman Lahan
+                    {loading ? "Menyimpan..." : "Tambah Tanaman Lahan"}
                   </button>
                 </div>
               </form>
