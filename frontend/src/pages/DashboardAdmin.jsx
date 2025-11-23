@@ -349,7 +349,7 @@ export default function DashboardAdmin() {
   return (
     <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       <SidebarAdmin />
-      <div className="flex-1 xl:ml-[256px]">
+      <div className="flex-1 xl:ml-[260px]">
         <TopbarAdmin />
 
         <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">

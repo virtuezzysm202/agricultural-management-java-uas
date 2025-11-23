@@ -17,6 +17,7 @@ export default function TanamanPage() {
     nama_tanaman: "",
     jenis: "",
     waktu_tanam: "",
+    jumlah_tanaman: "",
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -55,6 +56,7 @@ export default function TanamanPage() {
         nama_tanaman: "",
         jenis: "",
         waktu_tanam: "",
+        jumlah_tanaman: "",
       });
       setIsEditing(false);
     } catch (err) {
@@ -200,6 +202,21 @@ export default function TanamanPage() {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                      Jumlah Tanaman
+                    </label>
+                    <input
+                      type="number"
+                      name="jumlah_tanaman"
+                      value={form.jumlah_tanaman}
+                      onChange={handleChange}
+                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      placeholder="Jumlah stok tanaman"
+                      min="0"
+                    />
+                  </div>
+
                   <div className="flex gap-2 pt-2">
                     <button
                       type="submit"
@@ -217,6 +234,7 @@ export default function TanamanPage() {
                             nama_tanaman: "",
                             jenis: "",
                             waktu_tanam: "",
+                            jumlah_tanaman: "",
                           });
                           setIsEditing(false);
                         }}
@@ -270,6 +288,7 @@ export default function TanamanPage() {
                     <th className="px-4 py-3 text-left">ID</th>
                     <th className="px-4 py-3 text-left">Nama Tanaman</th>
                     <th className="px-4 py-3 text-left">Jenis</th>
+                    <th className="px-4 py-3 text-left">Jumlah</th>
                     <th className="px-4 py-3 text-left">Waktu Tanam</th>
                     <th className="px-4 py-3 text-center">Aksi</th>
                   </tr>
@@ -283,6 +302,7 @@ export default function TanamanPage() {
                       <td className="px-4 py-3 text-sm">{t.id_tanaman}</td>
                       <td className="px-4 py-3 text-sm">{t.nama_tanaman}</td>
                       <td className="px-4 py-3 text-sm">{t.jenis}</td>
+                      <td className="px-4 py-3 text-sm">{t.jumlah_tanaman || 0}</td>
                       <td className="px-4 py-3 text-sm">
                         {t.waktu_tanam
                           ? new Date(t.waktu_tanam).toLocaleDateString("id-ID")
@@ -307,7 +327,7 @@ export default function TanamanPage() {
                   {tanaman.length === 0 && (
                     <tr>
                       <td
-                        colSpan="5"
+                        colSpan="6"
                         className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         Tidak ada data tanaman.

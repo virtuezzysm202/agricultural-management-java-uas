@@ -2,10 +2,8 @@ import React from "react";
 import { LayoutGrid } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
-export default function SidebarAdmin() {
+export default function SidebarManager() {
   const location = useLocation();
-
-  // Fungsi untuk cek halaman aktif
   const isActive = (path) => location.pathname === path;
 
   const baseLink =
@@ -19,7 +17,7 @@ export default function SidebarAdmin() {
     <aside className="fixed flex flex-col top-0 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-40 border-r border-gray-200 w-[260px]">
       {/* 🔰 Logo */}
       <div className="py-7 px-6 flex items-center justify-start border-b border-gray-200 dark:border-gray-800">
-        <Link to="/dashboard/admin" className="flex items-center gap-2">
+        <Link to="/dashboard/manager" className="flex items-center gap-2">
           <LayoutGrid size={28} className="text-green-600" />
           <span className="text-xl font-bold text-gray-800 dark:text-white">
             AgroPanel
@@ -30,39 +28,57 @@ export default function SidebarAdmin() {
       {/* 📋 Navigasi */}
       <nav className="px-4 space-y-2 mt-4">
         <Link
-          to="/dashboard/admin"
+          to="/dashboard/manager"
           className={`${baseLink} ${
-            isActive("/dashboard/admin") ? activeStyle : inactiveStyle
+            isActive("/dashboard/manager") ? activeStyle : inactiveStyle
           }`}
         >
           <span>📊 Dashboard</span>
         </Link>
 
         <Link
-          to="/dashboard/admin/tanaman"
+          to="/dashboard/manager/tanaman-lahan"
           className={`${baseLink} ${
-            isActive("/dashboard/admin/tanaman") ? activeStyle : inactiveStyle
+            isActive("/dashboard/manager/tanaman-lahan") ? activeStyle : inactiveStyle
           }`}
         >
-          <span>🌱 Tanaman</span>
+          <span>🌱 Tanaman Lahan</span>
         </Link>
 
         <Link
-          to="/dashboard/admin/lahan"
+          to="/dashboard/manager/daftar-tanaman"
           className={`${baseLink} ${
-            isActive("/dashboard/admin/lahan") ? activeStyle : inactiveStyle
+            isActive("/dashboard/manager/daftar-tanaman") ? activeStyle : inactiveStyle
           }`}
         >
-          <span>🏡 Lahan</span>
+          <span>🪴 Daftar Tanaman</span>
         </Link>
 
         <Link
-          to="/dashboard/admin/manajer"
+          to="/dashboard/manager/hasil-panen"
           className={`${baseLink} ${
-            isActive("/dashboard/admin/manajer") ? activeStyle : inactiveStyle
+            isActive("/dashboard/manager/hasil-panen") ? activeStyle : inactiveStyle
           }`}
         >
-          <span>👨‍🌾 Manajer</span>
+          <span>🌾 Hasil Panen</span>
+        </Link>
+
+        <Link
+          to="/dashboard/manager/monitoring"
+          className={`${baseLink} ${
+            isActive("/dashboard/manager/monitoring") ? activeStyle : inactiveStyle
+          }`}
+        >
+          <span>📊 Monitoring</span>
+        </Link>
+
+        <Link
+          to="/dashboard/manager/pembelian"
+          className={`${baseLink} ${
+            isActive("/dashboard/manager/pembelian") ? activeStyle : inactiveStyle
+          }`}
+        >
+          <span>🛒 Pembelian</span>
         </Link>
       </nav>
     </aside>

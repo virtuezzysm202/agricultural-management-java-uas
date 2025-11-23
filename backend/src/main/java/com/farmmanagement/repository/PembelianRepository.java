@@ -34,11 +34,12 @@ public class PembelianRepository {
             pembelian.setStatus("Diproses");
         }
         
-        String sql = "INSERT INTO pembelian (id_pembeli, id_hasil, id_tanaman, tanggal, jumlah, total_harga, status) " +
-                     "VALUES (:id_pembeli, :id_hasil, :id_tanaman, :tanggal, :jumlah, :total_harga, :status)";
+        String sql = "INSERT INTO pembelian (id_pembeli, id_penjual, id_hasil, id_tanaman, tanggal, jumlah, total_harga, status) " +
+                     "VALUES (:id_pembeli, :id_penjual, :id_hasil, :id_tanaman, :tanggal, :jumlah, :total_harga, :status)";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_pembeli", pembelian.getId_pembeli())
+                             .addParameter("id_penjual", pembelian.getId_penjual())
                              .addParameter("id_hasil", pembelian.getId_hasil())
                              .addParameter("id_tanaman", pembelian.getId_tanaman())
                              .addParameter("tanggal", pembelian.getTanggal())
@@ -53,13 +54,14 @@ public class PembelianRepository {
 
     // Update pembelian berdasarkan ID
     public boolean update(Pembelian pembelian) {
-        String sql = "UPDATE pembelian SET id_pembeli = :id_pembeli, id_hasil = :id_hasil, id_tanaman = :id_tanaman, " +
+        String sql = "UPDATE pembelian SET id_pembeli = :id_pembeli, id_penjual = :id_penjual, id_hasil = :id_hasil, id_tanaman = :id_tanaman, " +
                      "tanggal = :tanggal, jumlah = :jumlah, total_harga = :total_harga, status = :status " +
                      "WHERE id_pembelian = :id_pembelian";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_pembelian", pembelian.getId_pembelian())
                              .addParameter("id_pembeli", pembelian.getId_pembeli())
+                             .addParameter("id_penjual", pembelian.getId_penjual())
                              .addParameter("id_hasil", pembelian.getId_hasil())
                              .addParameter("id_tanaman", pembelian.getId_tanaman())
                              .addParameter("tanggal", pembelian.getTanggal())

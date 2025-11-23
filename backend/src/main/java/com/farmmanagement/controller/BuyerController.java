@@ -43,6 +43,11 @@ public class BuyerController {
                         return gson.toJson(Map.of("error", "ID pembeli harus valid (lebih dari 0)"));
                     }
                     
+                    if (pembelian.getId_penjual() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID penjual harus valid (lebih dari 0)"));
+                    }
+                    
                     if (pembelian.getId_hasil() <= 0) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "ID hasil panen harus valid (lebih dari 0)"));

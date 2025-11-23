@@ -156,13 +156,6 @@ export default function TopbarAdmin() {
   return (
     <header className="sticky top-0 z-50 flex w-full bg-white border-b border-gray-200 dark:bg-gray-900 dark:border-gray-800">
       <div className="flex items-center justify-between w-full px-4 py-3 xl:px-6">
-        {/* Logo */}
-        <a href="/dashboard/admin" className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-gray-800 dark:text-white">
-            AgriManagement
-          </span>
-        </a>
-
         {/* 🔍 Search */}
         <div className="relative w-full max-w-md hidden md:block">
           <div className="relative">

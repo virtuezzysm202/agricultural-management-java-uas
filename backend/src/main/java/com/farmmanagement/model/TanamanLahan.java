@@ -6,6 +6,7 @@ public class TanamanLahan {
     private int id_tl;
     private int id_lahan;
     private int id_tanaman;
+    private int id_pengawas; // ID of the manager supervising this planting
     private Date tanggal_tanam;
     private String status; // 'tumbuh', 'panen', 'selesai'
     private int jumlah_tanaman; // Jumlah tanaman yang ditanam di lahan ini
@@ -15,10 +16,11 @@ public class TanamanLahan {
     }
 
     // Constructor dengan parameter
-    public TanamanLahan(int id_tl, int id_lahan, int id_tanaman, Date tanggal_tanam, String status, int jumlah_tanaman) {
+    public TanamanLahan(int id_tl, int id_lahan, int id_tanaman, int id_pengawas, Date tanggal_tanam, String status, int jumlah_tanaman) {
         this.id_tl = id_tl;
         this.id_lahan = id_lahan;
         this.id_tanaman = id_tanaman;
+        this.id_pengawas = id_pengawas;
         this.tanggal_tanam = tanggal_tanam;
         this.status = status;
         this.jumlah_tanaman = jumlah_tanaman;
@@ -47,6 +49,14 @@ public class TanamanLahan {
 
     public void setId_tanaman(int id_tanaman) {
         this.id_tanaman = id_tanaman;
+    }
+
+    public int getId_pengawas() {
+        return id_pengawas;
+    }
+
+    public void setId_pengawas(int id_pengawas) {
+        this.id_pengawas = id_pengawas;
     }
 
     public Date getTanggal_tanam() {

@@ -10,6 +10,7 @@ import HasilPanenPage from "./pages/HasilPanenPage";
 import MonitoringPage from "./pages/MonitoringPage";
 import PembelianPage from "./pages/PembelianPage";
 import DashboardBuyer from "./pages/DashboardBuyer";
+import DaftarTanamanPage from "./pages/DaftarTanamanPage";
 
 function App() {
   return (
@@ -23,9 +24,12 @@ function App() {
         <Route path="/dashboard/manager" element={<DashboardManager />} />
         <Route path="/dashboard/manager/tanaman-lahan" element={<TanamanLahanPage />} />
         <Route path="/dashboard/manager/hasil-panen" element={<HasilPanenPage />} />
+        <Route path="/dashboard/manager/daftar-tanaman" element={<DaftarTanamanPage />} />
         <Route path="/dashboard/manager/monitoring" element={<MonitoringPage />} />
         <Route path="/dashboard/manager/pembelian" element={<PembelianPage />} />
         <Route path="/dashboard/buyer" element={<DashboardBuyer />} />
+        <Route path="/dashboard/buyer/purchases" element={<DashboardBuyer />} />
+        <Route path="/dashboard/buyer/products" element={<DashboardBuyer />} />
       </Routes>
     </BrowserRouter>
   );

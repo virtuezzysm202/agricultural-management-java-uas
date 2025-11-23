@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import SidebarManager from "../components/SidebarManager";
+import TopbarManager from "../components/TopbarManager";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -36,6 +38,7 @@ export default function MonitoringPage() {
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const fetchMonitoring = async () => {
     try {
@@ -192,34 +195,25 @@ export default function MonitoringPage() {
     return lahan ? lahan.nama_lahan : `ID ${id}`;
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-gray-800/70 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg px-4 py-3 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-              M
-            </div>
-            <div>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
-                Kelola Monitoring
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Pantau suhu dan kelembaban lahan
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate("/dashboard/manager")}
-            className="text-sm px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            Kembali ke Dashboard
-          </button>
-        </div>
-      </header>
+  const filteredMonitoring = monitoring.filter((m) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      String(m.id_monitor).includes(query) ||
+      getLahanName(m.id_lahan).toLowerCase().includes(query) ||
+      String(m.suhu).includes(query) ||
+      String(m.kelembaban).includes(query) ||
+      (m.tanggal && new Date(m.tanggal).toLocaleDateString("id-ID").includes(query))
+    );
+  });
 
-      <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
+  return (
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+      <SidebarManager />
+      <div className="flex-1 xl:ml-[260px]">
+        <TopbarManager />
+
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
         {/* HEADER */}
         <div>
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-50 flex items-center gap-2">
@@ -240,19 +234,19 @@ export default function MonitoringPage() {
               <div className="absolute -bottom-16 left-0 h-32 w-32 rounded-full bg-cyan-400/10 blur-3xl" />
             </div>
 
-            <div className="relative p-6 space-y-5">
+            <div className="relative p-4 space-y-3">
               <div>
-                <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
+                <h3 className="text-sm md:text-base font-semibold text-gray-900 dark:text-gray-50">
                   {isEditing ? "Edit Data Monitoring" : "Tambah Data Monitoring Baru"}
                 </h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                   Lengkapi detail monitoring untuk lahan yang dipilih.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                  <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
                     ID Lahan
                   </label>
                   <input
@@ -260,7 +254,7 @@ export default function MonitoringPage() {
                     name="id_lahan"
                     value={form.id_lahan}
                     onChange={handleChange}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                    className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
                     placeholder="Masukkan ID Lahan"
                     required
                   />
@@ -374,11 +368,43 @@ export default function MonitoringPage() {
                       plugins: {
                         legend: {
                           position: "top",
+                          labels: {
+                            color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151',
+                            font: {
+                              size: 12,
+                              family: 'inherit',
+                            },
+                          },
+                        },
+                        tooltip: {
+                          backgroundColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#fff',
+                          titleColor: document.documentElement.classList.contains('dark') ? '#fff' : '#1e293b',
+                          bodyColor: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151',
                         },
                       },
                       scales: {
+                        x: {
+                          ticks: {
+                            color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
+                            font: {
+                              size: 11,
+                            },
+                          },
+                          grid: {
+                            color: document.documentElement.classList.contains('dark') ? 'rgba(75,85,99,0.3)' : 'rgba(229,231,235,0.7)',
+                          },
+                        },
                         y: {
                           beginAtZero: true,
+                          ticks: {
+                            color: document.documentElement.classList.contains('dark') ? '#9ca3af' : '#6b7280',
+                            font: {
+                              size: 11,
+                            },
+                          },
+                          grid: {
+                            color: document.documentElement.classList.contains('dark') ? 'rgba(75,85,99,0.3)' : 'rgba(229,231,235,0.7)',
+                          },
                         },
                       },
                     }}
@@ -395,9 +421,28 @@ export default function MonitoringPage() {
 
         {/* TABEL MONITORING */}
         <section className="space-y-3 mb-10">
-          <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
-            Tabel Data Monitoring
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
+              Tabel Data Monitoring
+            </h3>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Cari data monitoring..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          </div>
           <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
               <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
@@ -411,7 +456,7 @@ export default function MonitoringPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {monitoring.map((m) => (
+                {filteredMonitoring.map((m) => (
                   <tr
                     key={m.id_monitor}
                     className="hover:bg-gray-50 dark:hover:bg-gray-900/70 transition-colors"
@@ -447,7 +492,7 @@ export default function MonitoringPage() {
                     </td>
                   </tr>
                 ))}
-                {monitoring.length === 0 && (
+                {filteredMonitoring.length === 0 && (
                   <tr>
                     <td
                       colSpan="6"
@@ -462,6 +507,7 @@ export default function MonitoringPage() {
           </div>
         </section>
       </main>
+      </div>
     </div>
   );
 }

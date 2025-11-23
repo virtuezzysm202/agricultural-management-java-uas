@@ -4,10 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import com.farmmanagement.model.HasilPanen;
+import com.farmmanagement.model.Lahan;
 import com.farmmanagement.model.Monitoring;
 import com.farmmanagement.model.Tanaman;
 import com.farmmanagement.model.TanamanLahan;
 import com.farmmanagement.service.HasilPanenService;
+import com.farmmanagement.service.LahanService;
 import com.farmmanagement.service.MonitoringService;
 import com.farmmanagement.service.TanamanLahanService;
 import com.farmmanagement.service.TanamanService;
@@ -31,6 +33,7 @@ public class ManagerController {
     private static final MonitoringService monitoringService = new MonitoringService();
     private static final TanamanService tanamanService = new TanamanService();
     private static final TanamanLahanService tanamanLahanService = new TanamanLahanService();
+    private static final LahanService lahanService = new LahanService();
 
     public static void registerRoutes() {
         path("/api/manager", () -> {
@@ -58,6 +61,13 @@ public class ManagerController {
                     if (hasilPanen.getId_lahan() <= 0) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "ID lahan harus valid (lebih dari 0)"));
+                    }
+                    
+                    // Check if lahan exists
+                    Lahan lahan = lahanService.getLahanById(hasilPanen.getId_lahan());
+                    if (lahan == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Lahan dengan ID " + hasilPanen.getId_lahan() + " tidak ditemukan"));
                     }
                     
                     if (hasilPanen.getId_pengawas() <= 0) {
@@ -520,6 +530,11 @@ public class ManagerController {
                         return gson.toJson(Map.of("error", "ID tanaman harus valid (lebih dari 0)"));
                     }
                     
+                    if (tanamanLahan.getId_pengawas() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID pengawas harus valid (lebih dari 0)"));
+                    }
+                    
                     if (tanamanLahan.getTanggal_tanam() == null) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Tanggal tanam tidak boleh kosong"));
@@ -548,9 +563,34 @@ public class ManagerController {
                         return gson.toJson(Map.of("error", "Tanaman ini sudah ada di lahan yang dipilih. Tidak boleh ada tanaman yang sama dalam satu lahan."));
                     }
 
+                    // Check if tanaman has enough stock
+                    Tanaman tanaman = tanamanService.getTanamanById(tanamanLahan.getId_tanaman());
+                    if (tanaman == null) {
+                        res.status(404);
+                        return gson.toJson(Map.of("error", "Tanaman dengan ID tersebut tidak ditemukan"));
+                    }
+                    
+                    if (tanaman.getJumlah_tanaman() < tanamanLahan.getJumlah_tanaman()) {
+                        res.status(400);
+                        return gson.toJson(Map.of(
+                            "error", 
+                            "Stok tanaman tidak mencukupi. Tersedia: " + tanaman.getJumlah_tanaman() + ", Diminta: " + tanamanLahan.getJumlah_tanaman()
+                        ));
+                    }
+
                     boolean added = tanamanLahanService.addTanamanLahan(tanamanLahan);
                     
                     if (added) {
+                        // Decrease tanaman stock after successful creation
+                        boolean decreased = tanamanService.decreaseJumlahTanaman(
+                            tanamanLahan.getId_tanaman(), 
+                            tanamanLahan.getJumlah_tanaman()
+                        );
+                        
+                        if (!decreased) {
+                            System.err.println("Warning: Failed to decrease tanaman stock for id_tanaman: " + tanamanLahan.getId_tanaman());
+                        }
+                        
                         return gson.toJson(Map.of(
                             "status", "success",
                             "message", "Tanaman lahan berhasil ditambahkan oleh manajer"
@@ -565,14 +605,10 @@ public class ManagerController {
                     System.err.println("Request body: " + req.body());
                     res.status(400);
                     return gson.toJson(Map.of("error", "Format data JSON tidak valid: " + e.getMessage()));
-                } catch (Exception e) {
-                    System.err.println("Error POST /api/manager/tanaman-lahan: " + e.getMessage());
-                    res.status(500);
-                    return gson.toJson(Map.of("error", "Internal Server Error saat menambah tanaman lahan"));
-                }
+                } 
             });
 
-             // DELETE tanaman lahan for manager
+            // DELETE tanaman lahan for manager
             delete("/tanaman-lahan/:id", (req, res) -> {
                 res.type("application/json");
                 try {

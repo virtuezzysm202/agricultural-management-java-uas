@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 public class Pembelian {
     private int id_pembelian;
     private int id_pembeli;
+    private int id_penjual;
     private int id_hasil;
     private int id_tanaman;
     private Timestamp tanggal;
@@ -17,9 +18,10 @@ public class Pembelian {
     }
 
     // Constructor dengan parameter
-    public Pembelian(int id_pembelian, int id_pembeli, int id_hasil, int id_tanaman, Timestamp tanggal, double jumlah, double total_harga, String status) {
+    public Pembelian(int id_pembelian, int id_pembeli, int id_penjual, int id_hasil, int id_tanaman, Timestamp tanggal, double jumlah, double total_harga, String status) {
         this.id_pembelian = id_pembelian;
         this.id_pembeli = id_pembeli;
+        this.id_penjual = id_penjual;
         this.id_hasil = id_hasil;
         this.id_tanaman = id_tanaman;
         this.tanggal = tanggal;
@@ -43,6 +45,14 @@ public class Pembelian {
 
     public void setId_pembeli(int id_pembeli) {
         this.id_pembeli = id_pembeli;
+    }
+
+    public int getId_penjual() {
+        return id_penjual;
+    }
+
+    public void setId_penjual(int id_penjual) {
+        this.id_penjual = id_penjual;
     }
 
     public int getId_hasil() {

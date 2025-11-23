@@ -30,13 +30,14 @@ public class TanamanLahanRepository {
     // Update tanaman lahan berdasarkan ID
     public boolean update(TanamanLahan tanamanLahan) {
         String sql = "UPDATE tanaman_lahan SET id_lahan = :id_lahan, id_tanaman = :id_tanaman, " +
-                     "tanggal_tanam = :tanggal_tanam, status = :status, jumlah_tanaman = :jumlah_tanaman " +
+                     "id_pengawas = :id_pengawas, tanggal_tanam = :tanggal_tanam, status = :status, jumlah_tanaman = :jumlah_tanaman " +
                      "WHERE id_tl = :id_tl";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_tl", tanamanLahan.getId_tl())
                              .addParameter("id_lahan", tanamanLahan.getId_lahan())
                              .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
+                             .addParameter("id_pengawas", tanamanLahan.getId_pengawas())
                              .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
                              .addParameter("status", tanamanLahan.getStatus())
                              .addParameter("jumlah_tanaman", tanamanLahan.getJumlah_tanaman())
@@ -48,12 +49,13 @@ public class TanamanLahanRepository {
 
     // Tambah tanaman lahan baru
     public boolean save(TanamanLahan tanamanLahan) {
-        String sql = "INSERT INTO tanaman_lahan (id_lahan, id_tanaman, tanggal_tanam, status, jumlah_tanaman) " +
-                     "VALUES (:id_lahan, :id_tanaman, :tanggal_tanam, :status, :jumlah_tanaman)";
+        String sql = "INSERT INTO tanaman_lahan (id_lahan, id_tanaman, id_pengawas, tanggal_tanam, status, jumlah_tanaman) " +
+                     "VALUES (:id_lahan, :id_tanaman, :id_pengawas, :tanggal_tanam, :status, :jumlah_tanaman)";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_lahan", tanamanLahan.getId_lahan())
                              .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
+                             .addParameter("id_pengawas", tanamanLahan.getId_pengawas())
                              .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
                              .addParameter("status", tanamanLahan.getStatus())
                              .addParameter("jumlah_tanaman", tanamanLahan.getJumlah_tanaman())

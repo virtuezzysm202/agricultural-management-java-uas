@@ -69,4 +69,17 @@ public class TanamanRepository {
             return result > 0;
         }
     }
+
+    // Decrease jumlah_tanaman by a specific amount
+    public boolean decreaseJumlahTanaman(int idTanaman, int amount) {
+        String sql = "UPDATE tanaman SET jumlah_tanaman = jumlah_tanaman - :amount WHERE id_tanaman = :id_tanaman AND jumlah_tanaman >= :amount";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            int result = conn.createQuery(sql)
+                             .addParameter("id_tanaman", idTanaman)
+                             .addParameter("amount", amount)
+                             .executeUpdate()
+                             .getResult();
+            return result > 0;
+        }
+    }
 }

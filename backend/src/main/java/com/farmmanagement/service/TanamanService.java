@@ -27,4 +27,8 @@ public class TanamanService {
     public boolean deleteTanaman(int id) {
         return repo.delete(id);
     }
+
+    public boolean decreaseJumlahTanaman(int idTanaman, int amount) {
+        return repo.decreaseJumlahTanaman(idTanaman, amount);
+    }
 }

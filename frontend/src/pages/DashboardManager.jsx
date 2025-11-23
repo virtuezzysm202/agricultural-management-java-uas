@@ -1,47 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
-
-// Toolbar kecil di atas tabel
-function TableToolbar({ title, onRefresh }) {
-  return (
-    <div className="flex items-center justify-between mb-3">
-      <h3 className="text-base md:text-lg font-semibold text-gray-800 dark:text-gray-100">
-        {title}
-      </h3>
-      <button
-        onClick={onRefresh}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-300/70 bg-white/90 text-xs md:text-sm text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-900/80 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800 transition-colors"
-      >
-        ⟳
-        <span>Refresh</span>
-      </button>
-    </div>
-  );
-}
-
-// Modal sederhana untuk edit/add data
-function SimpleModal({ open, onClose, title, children }) {
-if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-950 border border-gray-200/80 dark:border-gray-800/80 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.75)]">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {title}
-          </h4>
-          <button
-            onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-          >
-            Close
-          </button>
-        </div>
-        <div>{children}</div>
-      </div>
-    </div>
-  );
-}
+import TopbarManager from "../components/TopbarManager";
+import SidebarManager from "../components/SidebarManager";
+import TableToolbar from "../components/TableToolbar";
+import SimpleModal from "../components/SimpleModal";
 
 export default function DashboardManager() {
   const navigate = useNavigate();
@@ -198,8 +161,8 @@ export default function DashboardManager() {
   // ======= EDIT / DELETE HANDLERS =======
   const openEdit = async (type, item) => {
     setEditType(type);
-    // Automatically set id_pengawas for harvest from current user
-    if (type === "harvest") {
+    // Automatically set id_pengawas for harvest and lahan from current user
+    if (type === "harvest" || type === "lahan") {
       if (currentUser && currentUser.id_user) {
         setCurrent({ ...item, id_pengawas: currentUser.id_user });
         setEditOpen(true);
@@ -276,14 +239,27 @@ export default function DashboardManager() {
         }
         loadHarvests();
       } else if (editType === "lahan") {
+        // Ensure id_pengawas is set before saving
+        if (!current.id_pengawas || current.id_pengawas <= 0) {
+          try {
+            const userRes = await api.get("/user/current");
+            current.id_pengawas = userRes.data.id_user;
+          } catch (err) {
+            console.error("Failed to get current user in handleSave:", err);
+            alert("Gagal mendapatkan ID pengawas. Silakan login ulang.");
+            return;
+          }
+        }
+        
         if (current.id_tl) {
           alert("Update tanaman lahan belum tersedia");
         } else {
           // Create
           await api.post("/manager/tanaman-lahan", current);
-          alert("Tanaman lahan berhasil ditambahkan");
+          alert("Lahan tanaman berhasil ditambahkan");
         }
         loadLahans();
+        loadTanamans(); // Refresh tanaman stock after creating lahan
       } else if (editType === "monitor") {
         if (current.id_monitor) {
           // Update
@@ -322,72 +298,23 @@ export default function DashboardManager() {
   };
 
   // ======= PERHITUNGAN STATS =======
-  const totalLahan = lahans.length;
+  const totalLahan = lahans.filter((l) => currentUser && l.id_pengawas === currentUser.id_user).length;
   const jenisTanaman = tanamans.length;
-  const totalPanenKg = harvests.reduce((sum, h) => sum + (h.kuantitas || 0), 0);
-  const totalRevenue = purchases.reduce((sum, p) => sum + (p.total_harga || 0), 0);
+  const totalPanenKg = harvests
+    .filter((h) => currentUser && h.id_pengawas === currentUser.id_user)
+    .reduce((sum, h) => sum + (h.kuantitas || 0), 0);
+  const totalRevenue = purchases
+    .filter((p) => currentUser && p.id_penjual === currentUser.id_user)
+    .reduce((sum, p) => sum + (p.total_harga || 0), 0);
 
   // ======= RENDER =======
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100">
-      {/* Header */}
-      <header className="sticky top-0 z-40 border-b border-gray-200/70 dark:border-gray-800/70 bg-white/80 dark:bg-gray-950/80 backdrop-blur-lg px-4 py-3 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
-              M
-            </div>
-            <div>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">
-                Manager Dashboard
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Kelola Hasil Panen & Monitoring
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+      <SidebarManager />
+      <div className="flex-1 xl:ml-[260px]">
+        <TopbarManager />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Quick Navigation */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Link
-            to="/dashboard/manager/tanaman-lahan"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🌱</span>
-            <p className="mt-2 text-sm font-semibold">Tanaman Lahan</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/hasil-panen"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🌾</span>
-            <p className="mt-2 text-sm font-semibold">Hasil Panen</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/monitoring"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">📊</span>
-            <p className="mt-2 text-sm font-semibold">Monitoring</p>
-          </Link>
-          <Link
-            to="/dashboard/manager/pembelian"
-            className="p-4 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm hover:shadow-md transition-all text-center"
-          >
-            <span className="text-2xl">🛒</span>
-            <p className="mt-2 text-sm font-semibold">Pembelian</p>
-          </Link>
-        </div>
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -426,9 +353,24 @@ export default function DashboardManager() {
         </div>
 
         {/* Tables Section */}
+        <style>{`
+          /* Custom green scrollbar for table overflows */
+          .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            background: #18181b;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 8px;
+          }
+          .custom-scrollbar {
+            scrollbar-color: #22c55e #18181b;
+            scrollbar-width: thin;
+          }
+        `}</style>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Hasil Panen Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
             <TableToolbar title="Hasil Panen" onRefresh={loadHarvests} />
             <button
               onClick={() => openEdit("harvest", {
@@ -445,7 +387,7 @@ export default function DashboardManager() {
             >
               + Tambah Hasil Panen
             </button>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-xs md:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
@@ -454,7 +396,7 @@ export default function DashboardManager() {
                     <th className="px-3 py-2 text-left">Lahan</th>
                     <th className="px-3 py-2 text-left">Kuantitas</th>
                     <th className="px-3 py-2 text-left">Kualitas</th>
-                    <th className="px-3 py-2 text-left">Status</th>
+                    <th className="px-3 py-2 text-center">Status</th>
                     <th className="px-3 py-2 text-left">Aksi</th>
                   </tr>
                 </thead>
@@ -472,45 +414,51 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    harvests.slice(0, 5).map((h) => (
-                      <tr
-                        key={h.id_hasil}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                      >
-                        <td className="px-3 py-2">{h.id_hasil}</td>
-                        <td className="px-3 py-2">{h.id_tanaman}</td>
-                        <td className="px-3 py-2">{h.id_lahan}</td>
-                        <td className="px-3 py-2">{h.kuantitas} kg</td>
-                        <td className="px-3 py-2">{h.kualitas}</td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              h.status === "Siap Dijual"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : h.status === "Terjual"
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            }`}
-                          >
-                            {h.status}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() => openEdit("harvest", h)}
-                            className="text-blue-600 hover:text-blue-800 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete("harvest", h.id_hasil)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    harvests
+                      .filter((h) => currentUser && h.id_pengawas === currentUser.id_user)
+                      .slice(0, 5)
+                      .map((h) => (
+                        <tr
+                          key={h.id_hasil}
+                          className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        >
+                          <td className="px-3 py-2">{h.id_hasil}</td>
+                          <td className="px-3 py-2">{h.id_tanaman}</td>
+                          <td className="px-3 py-2">{h.id_lahan}</td>
+                          <td className="px-3 py-2">{h.kuantitas} kg</td>
+                          <td className="px-3 py-2">{h.kualitas}</td>
+                          <td className="px-3 py-2 text-center">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs whitespace-nowrap max-w-[120px] overflow-hidden text-ellipsis ${
+                                h.status === "Siap Dijual"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  : h.status === "Terjual"
+                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              }`}
+                              title={h.status}
+                            >
+                              {h.status}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">
+                            <div className="flex flex-row gap-2 justify-center">
+                              <button
+                                onClick={() => openEdit("harvest", h)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete("harvest", h.id_hasil)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
               </table>
@@ -525,23 +473,25 @@ export default function DashboardManager() {
             </div>
           </div>
 
-          {/* Tanaman Lahan Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
-            <TableToolbar title="Tanaman Lahan" onRefresh={loadLahans} />
+          {/* Lahan Tanaman Table */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+            <TableToolbar title="Lahan Tanaman" onRefresh={loadLahans} />
             <button
               onClick={() => openEdit("lahan", {
                 id_lahan: 0,
                 id_tanaman: 0,
+                id_pengawas: 0,
                 jumlah_tanaman: 0,
                 tanggal_tanam: new Date().toISOString().split("T")[0],
                 status: "tumbuh",
               })}
               className="mb-3 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
             >
-              + Tambah Tanaman Lahan
+              + Tambah Lahan Tanaman
             </button>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="max-h-[36rem] overflow-y-auto rounded-md">
+                <table className="w-full text-xs md:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-3 py-2 text-left">ID</th>
@@ -567,7 +517,10 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    lahans.slice(0, 5).map((l) => (
+                    lahans
+                      .filter((l) => currentUser && l.id_pengawas === currentUser.id_user)
+                      .slice(0, 5)
+                      .map((l) => (
                       <tr
                         key={l.id_tl}
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
@@ -594,7 +547,8 @@ export default function DashboardManager() {
                     ))
                   )}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
             <div className="mt-3 text-center">
               <Link
@@ -607,7 +561,7 @@ export default function DashboardManager() {
           </div>
 
           {/* Monitoring Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
             <TableToolbar title="Monitoring" onRefresh={loadMonitors} />
             <button
               onClick={() => openEdit("monitor", {
@@ -620,8 +574,9 @@ export default function DashboardManager() {
             >
               + Tambah Monitoring
             </button>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="max-h-[36rem] overflow-y-auto rounded-md">
+                <table className="w-full text-xs md:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-3 py-2 text-left">ID</th>
@@ -674,7 +629,8 @@ export default function DashboardManager() {
                     ))
                   )}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
             <div className="mt-3 text-center">
               <Link
@@ -687,10 +643,11 @@ export default function DashboardManager() {
           </div>
 
           {/* Tanaman Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
             <TableToolbar title="Daftar Tanaman" onRefresh={loadTanamans} />
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="max-h-[36rem] overflow-y-auto rounded-md">
+                <table className="w-full text-xs md:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-3 py-2 text-left">ID</th>
@@ -736,11 +693,12 @@ export default function DashboardManager() {
                     ))
                   )}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
             <div className="mt-3 text-center">
               <Link
-                to="/dashboard/tanaman"
+                to="/dashboard/manager/daftar-tanaman"
                 className="text-sm text-green-600 hover:text-green-700 font-medium"
               >
                 Lihat Semua →
@@ -749,10 +707,11 @@ export default function DashboardManager() {
           </div>
 
           {/* Pembelian Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
             <TableToolbar title="Pembelian" onRefresh={loadPurchases} />
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs md:text-sm">
+            <div className="overflow-x-auto custom-scrollbar">
+              <div className="max-h-[36rem] overflow-y-auto rounded-md">
+                <table className="w-full text-xs md:text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-3 py-2 text-left">ID</th>
@@ -780,50 +739,56 @@ export default function DashboardManager() {
                       </td>
                     </tr>
                   ) : (
-                    purchases.slice(0, 5).map((p) => (
-                      <tr
-                        key={p.id_pembelian}
-                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                      >
-                        <td className="px-3 py-2">{p.id_pembelian}</td>
-                        <td className="px-3 py-2">{p.id_pembeli}</td>
-                        <td className="px-3 py-2">{p.id_hasil}</td>
-                        <td className="px-3 py-2">{p.id_tanaman}</td>
-                        <td className="px-3 py-2">{p.jumlah}</td>
-                        <td className="px-3 py-2">
-                          Rp {p.total_harga.toLocaleString("id-ID")}
-                        </td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              p.status === "Diterima"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                            }`}
-                          >
-                            {p.status || "Diproses"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">{p.tanggal}</td>
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() => openEdit("purchase", p)}
-                            className="text-blue-600 hover:text-blue-800 mr-2"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete("purchase", p.id_pembelian)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
+                    purchases
+                      .filter((p) => currentUser && p.id_penjual === currentUser.id_user)
+                      .slice(0, 5)
+                      .map((p) => (
+                        <tr
+                          key={p.id_pembelian}
+                          className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        >
+                          <td className="px-3 py-2">{p.id_pembelian}</td>
+                          <td className="px-3 py-2">{p.id_pembeli}</td>
+                          <td className="px-3 py-2">{p.id_hasil}</td>
+                          <td className="px-3 py-2">{p.id_tanaman}</td>
+                          <td className="px-3 py-2">{p.jumlah}</td>
+                          <td className="px-3 py-2">
+                            Rp {p.total_harga.toLocaleString("id-ID")}
+                          </td>
+                          <td className="px-3 py-2">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${
+                                p.status === "Diterima"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                  : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              }`}
+                            >
+                              {p.status || "Diproses"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2">{p.tanggal}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex flex-row gap-2 justify-center">
+                              <button
+                                onClick={() => openEdit("purchase", p)}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete("purchase", p.id_pembelian)}
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                   )}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
             <div className="mt-3 text-center">
               <Link
@@ -847,7 +812,7 @@ export default function DashboardManager() {
               ? "Edit Hasil Panen"
               : "Tambah Hasil Panen"
             : editType === "lahan"
-            ? "Tambah Tanaman Lahan"
+            ? "Tambah Lahan Tanaman"
             : editType === "monitor"
             ? current?.id_monitor
               ? "Edit Monitoring"
@@ -982,6 +947,16 @@ export default function DashboardManager() {
                   />
                 </div>
                 <div>
+                  <label className="block text-sm mb-1">ID Pengawas (Auto)</label>
+                  <input
+                    type="text"
+                    value={current.id_pengawas || "(Auto-filled from current user)"}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                    title="ID Pengawas otomatis dari user yang login"
+                  />
+                </div>
+                <div>
                   <label className="block text-sm mb-1">Jumlah Tanaman</label>
                   <input
                     type="number"
@@ -1005,14 +980,17 @@ export default function DashboardManager() {
                 </div>
                 <div>
                   <label className="block text-sm mb-1">Status</label>
-                  <input
-                    type="text"
+                  <select
                     value={current.status || "tumbuh"}
                     onChange={(e) =>
                       setCurrent({ ...current, status: e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                  />
+                  >
+                    <option value="tumbuh">Tumbuh</option>
+                    <option value="panen">Panen</option>
+                    <option value="gagal">Gagal</option>
+                  </select>
                 </div>
               </>
             )}
@@ -1125,6 +1103,7 @@ export default function DashboardManager() {
           </div>
         )}
       </SimpleModal>
+      </div>
     </div>
   );
 }
