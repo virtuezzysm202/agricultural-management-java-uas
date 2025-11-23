@@ -273,6 +273,7 @@ export default function DashboardBuyer() {
         jumlah: parseFloat(formData.jumlah),
         total_harga: parseFloat(formData.total_harga),
         tanggal: formData.tanggal,
+        status: "Diproses", // Auto-set status to Diproses
       };
 
       console.log("Creating purchase:", purchaseData);
@@ -395,22 +396,23 @@ export default function DashboardBuyer() {
                 <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
                     <th className="px-3 py-2 text-left">ID</th>
-                    <th className="px-3 py-2 text-left">ID Hasil</th>
+                    <th className="px-3 py-2 text-left">Hasil Panen</th>
                     <th className="px-3 py-2 text-left">Jumlah (kg)</th>
                     <th className="px-3 py-2 text-left">Total Harga</th>
+                    <th className="px-3 py-2 text-left">Status</th>
                     <th className="px-3 py-2 text-left">Tanggal</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading.p ? (
                     <tr>
-                      <td colSpan="5" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="6" className="px-3 py-4 text-center text-gray-500">
                         Loading...
                       </td>
                     </tr>
                   ) : purchases.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="6" className="px-3 py-4 text-center text-gray-500">
                         Belum ada pembelian
                       </td>
                     </tr>
@@ -425,6 +427,17 @@ export default function DashboardBuyer() {
                         <td className="px-3 py-2">{p.jumlah} kg</td>
                         <td className="px-3 py-2">
                           Rp {parseFloat(p.total_harga)?.toLocaleString("id-ID") || 0}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              p.status === "Diterima"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            }`}
+                          >
+                            {p.status || "Diproses"}
+                          </span>
                         </td>
                         <td className="px-3 py-2">
                           {p.tanggal

@@ -48,6 +48,11 @@ public class BuyerController {
                         return gson.toJson(Map.of("error", "ID hasil panen harus valid (lebih dari 0)"));
                     }
                     
+                    if (pembelian.getId_tanaman() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "ID tanaman harus valid (lebih dari 0)"));
+                    }
+                    
                     if (pembelian.getJumlah() <= 0) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Jumlah harus lebih dari 0"));
@@ -61,6 +66,18 @@ public class BuyerController {
                     if (pembelian.getTanggal() == null) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Tanggal pembelian tidak boleh kosong"));
+                    }
+                    
+                    // Set default status if not provided
+                    if (pembelian.getStatus() == null || pembelian.getStatus().trim().isEmpty()) {
+                        pembelian.setStatus("Diproses");
+                    }
+                    
+                    // Validate status values
+                    String status = pembelian.getStatus();
+                    if (!status.equals("Diproses") && !status.equals("Diterima")) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Status harus 'Diproses' atau 'Diterima'"));
                     }
 
                     boolean added = pembelianService.addPembelian(pembelian);

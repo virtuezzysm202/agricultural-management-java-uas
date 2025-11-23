@@ -52,6 +52,7 @@ export default function DashboardManager() {
   const [monitors, setMonitors] = useState([]); // monitoring
   const [purchases, setPurchases] = useState([]); // pembelian
   const [tanamans, setTanamans] = useState([]); // tanaman
+  const [currentUser, setCurrentUser] = useState(null); // current logged-in user
 
   // modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -167,6 +168,26 @@ export default function DashboardManager() {
       return;
     }
     
+    // Fetch current user data from API to get id_user
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await api.get("/user/current");
+        setCurrentUser(res.data);
+        console.log("Current user from API:", res.data);
+      } catch (err) {
+        console.error("Failed to fetch current user:", err);
+        // Fallback: try to decode token
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setCurrentUser(payload);
+          console.log("Current user from token:", payload);
+        } catch (decodeErr) {
+          console.error("Failed to decode token:", decodeErr);
+        }
+      }
+    };
+    
+    fetchCurrentUser();
     loadHarvests();
     loadLahans();
     loadMonitors();
@@ -175,10 +196,28 @@ export default function DashboardManager() {
   }, []);
 
   // ======= EDIT / DELETE HANDLERS =======
-  const openEdit = (type, item) => {
+  const openEdit = async (type, item) => {
     setEditType(type);
-    setCurrent(item);
-    setEditOpen(true);
+    // Automatically set id_pengawas for harvest from current user
+    if (type === "harvest") {
+      if (currentUser && currentUser.id_user) {
+        setCurrent({ ...item, id_pengawas: currentUser.id_user });
+        setEditOpen(true);
+      } else {
+        // If currentUser not yet loaded, fetch from API
+        try {
+          const res = await api.get("/user/current");
+          setCurrent({ ...item, id_pengawas: res.data.id_user });
+          setEditOpen(true);
+        } catch (err) {
+          console.error("Failed to get current user in openEdit:", err);
+          alert("Gagal mendapatkan data pengguna. Silakan refresh halaman.");
+        }
+      }
+    } else {
+      setCurrent(item);
+      setEditOpen(true);
+    }
   };
 
   const handleDelete = async (type, id) => {
@@ -214,6 +253,18 @@ export default function DashboardManager() {
   const handleSave = async () => {
     try {
       if (editType === "harvest") {
+        // Ensure id_pengawas is set before saving
+        if (!current.id_pengawas || current.id_pengawas <= 0) {
+          try {
+            const userRes = await api.get("/user/current");
+            current.id_pengawas = userRes.data.id_user;
+          } catch (err) {
+            console.error("Failed to get current user in handleSave:", err);
+            alert("Gagal mendapatkan ID pengawas. Silakan login ulang.");
+            return;
+          }
+        }
+        
         if (current.id_hasil) {
           // Update
           await api.put(`/manager/hasil-panen/${current.id_hasil}`, current);
@@ -383,7 +434,7 @@ export default function DashboardManager() {
               onClick={() => openEdit("harvest", {
                 id_tanaman: 0,
                 id_lahan: 0,
-                id_pengawas: 0,
+                id_pengawas: 0, // Will be set by openEdit function
                 kuantitas: 0,
                 kualitas: "A",
                 harga_satuan: 0,
@@ -481,6 +532,7 @@ export default function DashboardManager() {
               onClick={() => openEdit("lahan", {
                 id_lahan: 0,
                 id_tanaman: 0,
+                jumlah_tanaman: 0,
                 tanggal_tanam: new Date().toISOString().split("T")[0],
                 status: "tumbuh",
               })}
@@ -495,6 +547,7 @@ export default function DashboardManager() {
                     <th className="px-3 py-2 text-left">ID</th>
                     <th className="px-3 py-2 text-left">Lahan</th>
                     <th className="px-3 py-2 text-left">Tanaman</th>
+                    <th className="px-3 py-2 text-left">Jumlah</th>
                     <th className="px-3 py-2 text-left">Tanggal Tanam</th>
                     <th className="px-3 py-2 text-left">Status</th>
                     <th className="px-3 py-2 text-left">Aksi</th>
@@ -503,13 +556,13 @@ export default function DashboardManager() {
                 <tbody>
                   {loading.l ? (
                     <tr>
-                      <td colSpan="6" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="7" className="px-3 py-4 text-center text-gray-500">
                         Loading...
                       </td>
                     </tr>
                   ) : lahans.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="7" className="px-3 py-4 text-center text-gray-500">
                         Tidak ada data
                       </td>
                     </tr>
@@ -522,6 +575,7 @@ export default function DashboardManager() {
                         <td className="px-3 py-2">{l.id_tl}</td>
                         <td className="px-3 py-2">{l.id_lahan}</td>
                         <td className="px-3 py-2">{l.id_tanaman}</td>
+                        <td className="px-3 py-2">{l.jumlah_tanaman || 0} crops</td>
                         <td className="px-3 py-2">{l.tanggal_tanam}</td>
                         <td className="px-3 py-2">
                           <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -632,6 +686,68 @@ export default function DashboardManager() {
             </div>
           </div>
 
+          {/* Tanaman Table */}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
+            <TableToolbar title="Daftar Tanaman" onRefresh={loadTanamans} />
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs md:text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-3 py-2 text-left">ID</th>
+                    <th className="px-3 py-2 text-left">Nama Tanaman</th>
+                    <th className="px-3 py-2 text-left">Jenis</th>
+                    <th className="px-3 py-2 text-left">Jumlah</th>
+                    <th className="px-3 py-2 text-left">Waktu Tanam</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading.t ? (
+                    <tr>
+                      <td colSpan="5" className="px-3 py-4 text-center text-gray-500">
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : tanamans.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-3 py-4 text-center text-gray-500">
+                        Tidak ada data
+                      </td>
+                    </tr>
+                  ) : (
+                    tanamans.slice(0, 5).map((t) => (
+                      <tr
+                        key={t.id_tanaman}
+                        className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      >
+                        <td className="px-3 py-2">{t.id_tanaman}</td>
+                        <td className="px-3 py-2">{t.nama_tanaman}</td>
+                        <td className="px-3 py-2">{t.jenis}</td>
+                        <td className="px-3 py-2">{t.jumlah_tanaman || 0}</td>
+                        <td className="px-3 py-2">
+                          {t.waktu_tanam
+                            ? new Date(t.waktu_tanam).toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "-"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-3 text-center">
+              <Link
+                to="/dashboard/tanaman"
+                className="text-sm text-green-600 hover:text-green-700 font-medium"
+              >
+                Lihat Semua →
+              </Link>
+            </div>
+          </div>
+
           {/* Pembelian Table */}
           <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4">
             <TableToolbar title="Pembelian" onRefresh={loadPurchases} />
@@ -642,8 +758,10 @@ export default function DashboardManager() {
                     <th className="px-3 py-2 text-left">ID</th>
                     <th className="px-3 py-2 text-left">Pembeli</th>
                     <th className="px-3 py-2 text-left">Hasil</th>
+                    <th className="px-3 py-2 text-left">Tanaman</th>
                     <th className="px-3 py-2 text-left">Jumlah</th>
                     <th className="px-3 py-2 text-left">Total Harga</th>
+                    <th className="px-3 py-2 text-left">Status</th>
                     <th className="px-3 py-2 text-left">Tanggal</th>
                     <th className="px-3 py-2 text-left">Aksi</th>
                   </tr>
@@ -651,13 +769,13 @@ export default function DashboardManager() {
                 <tbody>
                   {loading.p ? (
                     <tr>
-                      <td colSpan="7" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="9" className="px-3 py-4 text-center text-gray-500">
                         Loading...
                       </td>
                     </tr>
                   ) : purchases.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="px-3 py-4 text-center text-gray-500">
+                      <td colSpan="9" className="px-3 py-4 text-center text-gray-500">
                         Tidak ada data
                       </td>
                     </tr>
@@ -670,9 +788,21 @@ export default function DashboardManager() {
                         <td className="px-3 py-2">{p.id_pembelian}</td>
                         <td className="px-3 py-2">{p.id_pembeli}</td>
                         <td className="px-3 py-2">{p.id_hasil}</td>
+                        <td className="px-3 py-2">{p.id_tanaman}</td>
                         <td className="px-3 py-2">{p.jumlah}</td>
                         <td className="px-3 py-2">
                           Rp {p.total_harga.toLocaleString("id-ID")}
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              p.status === "Diterima"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                            }`}
+                          >
+                            {p.status || "Diproses"}
+                          </span>
                         </td>
                         <td className="px-3 py-2">{p.tanggal}</td>
                         <td className="px-3 py-2">
@@ -754,14 +884,13 @@ export default function DashboardManager() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">ID Pengawas</label>
+                  <label className="block text-sm mb-1">ID Pengawas (Auto)</label>
                   <input
-                    type="number"
-                    value={current.id_pengawas || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, id_pengawas: +e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                    type="text"
+                    value={current.id_pengawas || "(Auto-filled from current user)"}
+                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+                    title="ID Pengawas otomatis dari user yang login"
                   />
                 </div>
                 <div>
@@ -848,6 +977,17 @@ export default function DashboardManager() {
                     value={current.id_tanaman || 0}
                     onChange={(e) =>
                       setCurrent({ ...current, id_tanaman: +e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Jumlah Tanaman</label>
+                  <input
+                    type="number"
+                    value={current.jumlah_tanaman || 0}
+                    onChange={(e) =>
+                      setCurrent({ ...current, jumlah_tanaman: +e.target.value })
                     }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
@@ -951,6 +1091,19 @@ export default function DashboardManager() {
                     }
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm mb-1">Status</label>
+                  <select
+                    value={current.status || "Diproses"}
+                    onChange={(e) =>
+                      setCurrent({ ...current, status: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  >
+                    <option value="Diproses">Diproses</option>
+                    <option value="Diterima">Diterima</option>
+                  </select>
                 </div>
               </>
             )}

@@ -27,4 +27,8 @@ public class TanamanLahanService {
     public boolean deleteTanamanLahan(int id) {
         return repo.delete(id);
     }
+
+    public boolean existsByLahanAndTanaman(int idLahan, int idTanaman) {
+        return repo.existsByLahanAndTanaman(idLahan, idTanaman);
+    }
 }

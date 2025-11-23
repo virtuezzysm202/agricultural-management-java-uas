@@ -81,6 +81,15 @@ public class PembelianController {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Data pembelian tidak lengkap atau tidak valid."));
                     }
+                    
+                    // Validate status if provided
+                    if (pembelian.getStatus() != null && !pembelian.getStatus().trim().isEmpty()) {
+                        String status = pembelian.getStatus();
+                        if (!status.equals("Diproses") && !status.equals("Diterima")) {
+                            res.status(400);
+                            return gson.toJson(Map.of("error", "Status harus 'Diproses' atau 'Diterima'"));
+                        }
+                    }
 
                     boolean ok = pembelianService.updatePembelian(pembelian);
                     if (ok) {

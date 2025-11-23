@@ -30,7 +30,7 @@ public class TanamanLahanRepository {
     // Update tanaman lahan berdasarkan ID
     public boolean update(TanamanLahan tanamanLahan) {
         String sql = "UPDATE tanaman_lahan SET id_lahan = :id_lahan, id_tanaman = :id_tanaman, " +
-                     "tanggal_tanam = :tanggal_tanam, status = :status " +
+                     "tanggal_tanam = :tanggal_tanam, status = :status, jumlah_tanaman = :jumlah_tanaman " +
                      "WHERE id_tl = :id_tl";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
@@ -39,6 +39,7 @@ public class TanamanLahanRepository {
                              .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
                              .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
                              .addParameter("status", tanamanLahan.getStatus())
+                             .addParameter("jumlah_tanaman", tanamanLahan.getJumlah_tanaman())
                              .executeUpdate()
                              .getResult();
             return result > 0;
@@ -47,17 +48,30 @@ public class TanamanLahanRepository {
 
     // Tambah tanaman lahan baru
     public boolean save(TanamanLahan tanamanLahan) {
-        String sql = "INSERT INTO tanaman_lahan (id_lahan, id_tanaman, tanggal_tanam, status) " +
-                     "VALUES (:id_lahan, :id_tanaman, :tanggal_tanam, :status)";
+        String sql = "INSERT INTO tanaman_lahan (id_lahan, id_tanaman, tanggal_tanam, status, jumlah_tanaman) " +
+                     "VALUES (:id_lahan, :id_tanaman, :tanggal_tanam, :status, :jumlah_tanaman)";
         try (Connection conn = DatabaseConfig.getSql2o().open()) {
             int result = conn.createQuery(sql)
                              .addParameter("id_lahan", tanamanLahan.getId_lahan())
                              .addParameter("id_tanaman", tanamanLahan.getId_tanaman())
                              .addParameter("tanggal_tanam", tanamanLahan.getTanggal_tanam())
                              .addParameter("status", tanamanLahan.getStatus())
+                             .addParameter("jumlah_tanaman", tanamanLahan.getJumlah_tanaman())
                              .executeUpdate()
                              .getResult();
             return result > 0;
+        }
+    }
+
+    // Check if tanaman already exists in lahan
+    public boolean existsByLahanAndTanaman(int idLahan, int idTanaman) {
+        String sql = "SELECT COUNT(*) FROM tanaman_lahan WHERE id_lahan = :id_lahan AND id_tanaman = :id_tanaman";
+        try (Connection conn = DatabaseConfig.getSql2o().open()) {
+            Integer count = conn.createQuery(sql)
+                               .addParameter("id_lahan", idLahan)
+                               .addParameter("id_tanaman", idTanaman)
+                               .executeScalar(Integer.class);
+            return count != null && count > 0;
         }
     }
 

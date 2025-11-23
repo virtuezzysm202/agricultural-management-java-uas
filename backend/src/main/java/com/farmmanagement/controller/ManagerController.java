@@ -525,6 +525,11 @@ public class ManagerController {
                         return gson.toJson(Map.of("error", "Tanggal tanam tidak boleh kosong"));
                     }
                     
+                    if (tanamanLahan.getJumlah_tanaman() <= 0) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Jumlah tanaman harus lebih dari 0"));
+                    }
+                    
                     if (tanamanLahan.getStatus() == null || tanamanLahan.getStatus().trim().isEmpty()) {
                         // Set default status if not provided
                         tanamanLahan.setStatus("tumbuh");
@@ -535,6 +540,12 @@ public class ManagerController {
                     if (!status.equals("tumbuh") && !status.equals("panen") && !status.equals("selesai")) {
                         res.status(400);
                         return gson.toJson(Map.of("error", "Status harus 'tumbuh', 'panen', atau 'selesai'"));
+                    }
+
+                    // Check if this tanaman already exists in this lahan
+                    if (tanamanLahanService.existsByLahanAndTanaman(tanamanLahan.getId_lahan(), tanamanLahan.getId_tanaman())) {
+                        res.status(409); // 409 Conflict
+                        return gson.toJson(Map.of("error", "Tanaman ini sudah ada di lahan yang dipilih. Tidak boleh ada tanaman yang sama dalam satu lahan."));
                     }
 
                     boolean added = tanamanLahanService.addTanamanLahan(tanamanLahan);
