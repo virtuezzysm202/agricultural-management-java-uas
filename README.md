@@ -1,46 +1,32 @@
-# Farm Management Backend
+# Farm Management System
 
-A lightweight backend service for a farm management system, built using **Spark Java**, **Sql2o**, and **PostgreSQL**.
-This project provides RESTful APIs for managing crops, planting activities, user authentication, and overall farm data operations.
+A complete farm management platform consisting of a lightweight Java backend and a modern React-based frontend.
+The system is designed to manage crops, planting activities, user authentication, and basic dashboard analytics.
 
 ---
+
+# 1. Backend Overview
+
+Backend service built using **Spark Java**, **Sql2o**, and **PostgreSQL**.
+Provides REST APIs for managing farm operations.
 
 ## Features
 
 * REST API using Spark Java
-* PostgreSQL database integration via Sql2o
-* Secure authentication with JWT
-* Password hashing with BCrypt
-* Environment configuration using Dotenv
-* JSON serialization using Gson
-* JUnit 5 for automated testing
-* SLF4J for logging
-
----
-
-## Tech Stack
-
-* **Java 17**
-* **Maven**
-* **Spark Java (2.9.4)**
-* **Sql2o (1.6.0)**
-* **PostgreSQL Driver (42.7.4)**
-* **Gson (2.10.1)**
-* **BCrypt (0.4)**
-* **JWT (4.4.0)**
-* **Dotenv Java (3.0.0)**
-* **JUnit Jupiter (5.10.2)**
-* **SLF4J (2.0.7)**
-
----
-
+* PostgreSQL integration (Sql2o)
+* JWT authentication
+* Password hashing (BCrypt)
+* Gson for JSON processing
+* Dotenv for environment configuration
+* SLF4J logging
+* JUnit 5 testing
 
 ## Requirements
 
 * Java 17
 * Maven 3.8+
-* PostgreSQL database
-* `.env` file for environment variables
+* PostgreSQL
+* `.env` configuration
 
 Example `.env`:
 
@@ -51,57 +37,21 @@ DB_PASSWORD=yourpassword
 JWT_SECRET=your_jwt_secret_key
 ```
 
----
+## Run Backend
 
-## Installation
-
-1. Clone the repository:
-
-```
-git clone <repo-url>
-cd farm-management-backend
-```
-
-2. Configure your `.env` file.
-
-3. Install dependencies:
+Install dependencies:
 
 ```
 mvn clean install
 ```
 
-4. Run the server:
+Run development server:
 
 ```
 mvn exec:java
 ```
 
----
-
-## API Endpoints (Overview)
-
-**Authentication**
-
-* `POST /auth/login` – User login
-* `POST /auth/register` – Create new user
-
-**Crops Management**
-
-* `GET /crops` – Fetch all crops
-* `POST /crops` – Add new crop
-* `PUT /crops/:id` – Update crop
-* `DELETE /crops/:id` – Remove crop
-
-**Planting Activities**
-
-* `GET /plantings`
-* `POST /plantings`
-
-More endpoints can be added as needed for farm expansion.
-
----
-
-## Running Tests
+Run tests:
 
 ```
 mvn test
@@ -109,31 +59,132 @@ mvn test
 
 ---
 
-## Logging
+# 2. Frontend Overview
 
-The application uses SLF4J Simple Logger.
-Configure logging through `simplelogger.properties` if needed.
+The frontend is built using **React 19**, **Vite**, and **TailwindCSS**, with charting support via ApexCharts, Chart.js, and Recharts.
 
----
+## Features
 
-## Build & Deployment
+* Built with React + Vite
+* React Router for navigation
+* Axios for API communication
+* TailwindCSS for styling
+* Dashboard charts using ApexCharts, Chart.js, and Recharts
+* Component icons via lucide-react
 
-To package the application:
+## Tech Stack
+
+* React 19
+* Vite 7
+* TailwindCSS 3.4
+* Axios
+* ApexCharts
+* Chart.js
+* Recharts
+* React Router DOM
+
+## Requirements
+
+* Node.js 18+
+* npm or yarn or pnpm
+
+## Install & Run Frontend
+
+Install dependencies:
 
 ```
-mvn package
+npm install
 ```
 
-The project can be deployed to any Java-based server, containerized with Docker, or run as a standalone JAR.
+Run development:
+
+```
+npm run dev
+```
+
+Build production:
+
+```
+npm run build
+```
+
+Preview build:
+
+```
+npm run preview
+```
 
 ---
 
-## License
+# 3. Project Structure
 
-This project may be licensed according to your preference. Add the license text if applicable.
+```
+root/
+ ├── backend/
+ │    ├── pom.xml
+ │    └── src/main/java/com/farmmanagement/
+ │         ├── App.java
+ │         ├── controllers/
+ │         ├── models/
+ │         ├── repositories/
+ │         └── utils/
+ └── frontend/
+      ├── package.json
+      ├── src/
+      │    ├── components/
+      │    ├── pages/
+      │    ├── hooks/
+      │    ├── services/     # API calls using Axios
+      │    └── styles/
+      └── public/
+```
 
 ---
 
-## Notes
+# 4. API Endpoints (Summary)
 
-This backend is intentionally lightweight to make the system easy to extend. Future modules such as inventory tracking, financial reporting, IoT sensor integration, and field monitoring can be incorporated without major architectural changes.
+## Auth
+
+* `POST /auth/login`
+* `POST /auth/register`
+
+## Crops
+
+* `GET /crops`
+* `POST /crops`
+* `PUT /crops/:id`
+* `DELETE /crops/:id`
+
+## Planting
+
+* `GET /plantings`
+* `POST /plantings`
+
+Additional endpoints can be added as the system evolves.
+
+---
+
+# 5. Deployment Notes
+
+Both apps can be deployed separately.
+
+**Backend**
+
+* Deploy as JAR
+* Deploy to VPS, Railway, Heroku alternative, or Docker
+
+**Frontend**
+
+* Deploy static build (Netlify, Vercel, Cloudflare Pages, Nginx)
+
+---
+
+# 6. License
+
+Add the license text if needed.
+
+---
+
+# 7. Notes
+
+This system is intentionally modular to support future extensions such as farm analytics, sensor monitoring, inventory tracking, and integrated financial tools.
