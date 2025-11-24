@@ -21,18 +21,14 @@ public class PembelianController {
             .create();
 
     public static void registerRoutes() {
-        path("/api/manager/pembelian", () -> {
+        path("/api/pembelian", () -> {
 
             // GET semua pembelian
             get("", (req, res) -> {
                 res.type("application/json");
                 try {
                     List<Pembelian> list = pembelianService.getAllPembelian();
-                    return gson.toJson(Map.of(
-                        "status", "success",
-                        "message", "Daftar pembelian berhasil diambil",
-                        "data", list
-                    ));
+                    return gson.toJson(list);
                 } catch (Exception e) {
                     System.err.println("Error GET /api/pembelian: " + e.getMessage());
                     res.status(500);

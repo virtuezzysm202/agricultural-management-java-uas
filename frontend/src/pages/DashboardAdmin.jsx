@@ -54,6 +54,7 @@ export default function DashboardAdmin() {
   const [purchases, setPurchases] = useState([]); // pembelian
   const [tanamans, setTanamans] = useState([]); // tanaman
   const [managers, setManagers] = useState([]); // manajer
+  const [allLahans, setAllLahans] = useState([]); // lahan (untuk Total Lahan card)
 
   // modal state
   const [editOpen, setEditOpen] = useState(false);
@@ -230,13 +231,23 @@ export default function DashboardAdmin() {
   const loadManagers = async () => {
     setLoading((s) => ({ ...s, ma: true }));
     try {
-      const res = await api.get("/manager").catch(() => ({ data: null }));
+      const res = await api.get("/user/manajer").catch(() => ({ data: null }));
       setManagers(res.data ?? demoManagers);
     } catch (err) {
       console.error(err);
       setManagers(demoManagers);
     } finally {
       setLoading((s) => ({ ...s, ma: false }));
+    }
+  };
+
+  const loadAllLahans = async () => {
+    try {
+      const res = await api.get("/lahan").catch(() => ({ data: null }));
+      setAllLahans(res.data ?? []);
+    } catch (err) {
+      console.error(err);
+      setAllLahans([]);
     }
   };
 
@@ -248,6 +259,7 @@ export default function DashboardAdmin() {
     loadPurchases();
     loadTanamans();
     loadManagers();
+    loadAllLahans();
   }, []);
 
   // ======= EDIT / DELETE HANDLERS =======
@@ -332,7 +344,7 @@ export default function DashboardAdmin() {
   };
 
   // ======= PERHITUNGAN STATS =======
-  const totalLahan = lahans.length;
+  const totalLahan = allLahans.length; // Dari tabel lahan, bukan tanaman_lahan
   const jenisTanaman = tanamans.length;
   const manajerAktif = managers.length;
   const totalPanenKg = harvests.reduce(
