@@ -89,8 +89,8 @@ export default function DashboardManager() {
   const loadPurchases = async () => {
     setLoading((prev) => ({ ...prev, p: true }));
     try {
-      const res = await api.get("/manager/pembelian");
-      setPurchases(res.data.data || []);
+      const res = await api.get("/pembelian");
+      setPurchases(res.data || []);
     } catch (err) {
       console.error("Error loading pembelian:", err);
       if (err.response?.status === 401 || err.response?.status === 403) {
@@ -191,7 +191,7 @@ export default function DashboardManager() {
       if (type === "harvest") endpoint = `/manager/hasil-panen/${id}`;
       else if (type === "lahan") endpoint = `/manager/tanaman-lahan/${id}`;
       else if (type === "monitor") endpoint = `/manager/monitoring/${id}`;
-      else if (type === "purchase") endpoint = `/manager/pembelian/${id}`;
+      else if (type === "purchase") endpoint = `/pembelian/${id}`;
 
       await api.delete(endpoint);
       alert("Data berhasil dihapus");
@@ -274,7 +274,7 @@ export default function DashboardManager() {
       } else if (editType === "purchase") {
         if (current.id_pembelian) {
           // Update
-          await api.put(`/manager/pembelian/${current.id_pembelian}`, current);
+          await api.put(`/pembelian/${current.id_pembelian}`, current);
           alert("Pembelian berhasil diupdate");
         }
         loadPurchases();
