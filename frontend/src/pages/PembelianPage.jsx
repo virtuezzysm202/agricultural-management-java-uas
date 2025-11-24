@@ -41,10 +41,10 @@ export default function PembelianPage() {
 
   const fetchPembelian = async (managerId) => {
     try {
-      const res = await api.get("/manager/pembelian");
-      // Filter pembelian sesuai id_manager (id_user manager saat ini)
-      const allPembelian = res.data.data || [];
-      const filtered = allPembelian.filter((p) => p.id_manager === managerId);
+      const res = await api.get("/pembelian");
+      // Filter pembelian sesuai id_penjual (id_user manager saat ini)
+      const allPembelian = res.data || [];
+      const filtered = allPembelian.filter((p) => p.id_penjual === managerId);
       setPembelian(filtered);
     } catch (err) {
       console.error("Gagal memuat data pembelian:", err);
@@ -126,7 +126,7 @@ export default function PembelianPage() {
         total_harga: parseFloat(form.total_harga),
       };
 
-      await api.put(`/manager/pembelian/${form.id_pembelian}`, dataToSubmit);
+      await api.put(`/pembelian/${form.id_pembelian}`, dataToSubmit);
       alert("Data pembelian berhasil diupdate!");
 
       fetchPembelian();
@@ -162,7 +162,7 @@ export default function PembelianPage() {
   const handleDelete = async (id) => {
     if (!window.confirm("Yakin ingin menghapus data pembelian ini?")) return;
     try {
-      await api.delete(`/manager/pembelian/${id}`);
+      await api.delete(`/pembelian/${id}`);
       alert("Data pembelian berhasil dihapus!");
       fetchPembelian();
     } catch (err) {
