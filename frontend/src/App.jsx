@@ -12,6 +12,8 @@ import PembelianPage from "./pages/PembelianPage";
 import DashboardBuyer from "./pages/DashboardBuyer";
 import DaftarTanamanPage from "./pages/DaftarTanamanPage";
 import RegisterPembeliPage from "./pages/RegisterPembeliPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
         <Route path="/dashboard/buyer/purchases" element={<DashboardBuyer />} />
         <Route path="/dashboard/buyer/products" element={<DashboardBuyer />} />
         <Route path="/register-pembeli" element={<RegisterPembeliPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
       </Routes>
     </BrowserRouter>
   );

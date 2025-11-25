@@ -51,18 +51,16 @@ export async function login(username, password) {
   try {
     const res = await api.post("/user/login", { username, password });
 
-    // Asumsi server mengembalikan { token: "..." }
-    // Simpan token di LocalStorage setelah login berhasil
+    // Simpan token jika login berhasil
     if (res.data && res.data.token) {
       localStorage.setItem("token", res.data.token);
     }
 
     return res.data;
   } catch (error) {
-    // Axios melempar error untuk status non-2xx.
-    // Kita bisa mendapatkan pesan error dari response data
-    const errorMessage = error.response?.data || error.message;
-    throw new Error(`Login failed: ${errorMessage}`);
+    // Ambil pesan error dari response JSON
+    const errorMessage = error.response?.data?.error || error.message;
+    throw new Error(errorMessage);
   }
 }
 
@@ -104,6 +102,27 @@ export async function registerPembeli(username, password, nama) {
   } catch (error) {
     const errorMessage = error.response?.data || error.message;
     throw new Error(`Register pembeli failed: ${errorMessage}`);
+  }
+}
+
+/**
+ * Reset password user/pembeli
+ * @param {string} username
+ * @param {string} oldPassword
+ * @param {string} newPassword
+ * @returns {Promise<object>} Response data dari server
+ */
+export async function resetPassword(username, oldPassword, newPassword) {
+  try {
+    const res = await api.post("/user/reset-password", {
+      username,
+      oldPassword,
+      newPassword,
+    });
+    return res;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message;
+    throw new Error(`Reset password failed: ${errorMessage}`);
   }
 }
 

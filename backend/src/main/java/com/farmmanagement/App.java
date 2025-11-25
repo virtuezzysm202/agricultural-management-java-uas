@@ -14,6 +14,7 @@ import com.farmmanagement.controller.TanamanController;
 import com.farmmanagement.controller.TanamanLahanController;
 import com.farmmanagement.controller.UserController;
 import com.farmmanagement.middleware.AuthMiddleware;
+import com.farmmanagement.middleware.RateLimiterMiddleware;
 
 import static spark.Spark.before;
 import static spark.Spark.get;
@@ -37,6 +38,7 @@ public class App {
         }
 
         // Middleware global (JWT auth)
+        RateLimiterMiddleware.register();
         AuthMiddleware.register();
 
         // Register semua routes

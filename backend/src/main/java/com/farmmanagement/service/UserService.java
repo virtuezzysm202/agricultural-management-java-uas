@@ -23,6 +23,10 @@ public class UserService {
         return null;
     }
 
+    public boolean checkPassword(String rawPassword, String hashedPassword) {
+        return BCrypt.checkpw(rawPassword, hashedPassword);
+    }
+
     public boolean register(String username, String password, String role, String nama) {
         // Cek duplikasi username sebelum menyimpan
         if (userRepository.findByUsername(username) != null) {
@@ -31,6 +35,15 @@ public class UserService {
         String hashed = BCrypt.hashpw(password, BCrypt.gensalt());
         User user = new User(username, hashed, role, nama);
         return userRepository.save(user);
+    }
+
+    public boolean resetPassword(String username, String oldPassword, String newPassword) {
+        User user = findByUsername(username);
+        if (user == null) return false;
+        if (!BCrypt.checkpw(oldPassword, user.getPassword())) return false;
+    
+        user.setPassword(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+        return userRepository.update(user); // gunakan repository, bukan saveUser
     }
     
     // --- CRUD Manager (Pengawas Management) ---

@@ -82,6 +82,13 @@ export default function LoginPage() {
           Daftar di sini
         </Link>
       </p>
+
+      <p className="text-center mt-2 text-sm text-gray-700 dark:text-gray-300">
+  Lupa password?{" "}
+  <Link to="/reset-password" className="text-blue-600 hover:underline dark:text-blue-400">
+    Reset di sini
+  </Link>
+</p>
     </form>
             </div>
           </div>

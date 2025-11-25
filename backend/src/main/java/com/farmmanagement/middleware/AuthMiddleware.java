@@ -13,9 +13,9 @@ public class AuthMiddleware {
         before("/api/*", (req, res) -> {
             String path = req.pathInfo();
 
-            // Lewati endpoint public (login & register)
-            if (path.equals("/api/user/login") || path.equals("/api/user/register")) {
-                return;
+            // Lewati endpoint public (login & register & reset password pembeli)
+            if (path.equals("/api/user/login") || path.equals("/api/user/register") || path.equals("/api/user/reset-password")) {
+                return; // bypass JWT check
             }
 
             String authHeader = req.headers("Authorization");

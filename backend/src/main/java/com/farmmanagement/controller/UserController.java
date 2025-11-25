@@ -1,5 +1,6 @@
 package com.farmmanagement.controller;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,27 +39,87 @@ public class UserController {
                                : gson.toJson(Map.of("error", "Registration failed: Username may already exist"));
             });
 
-            // LOGIN
-            post("/login", (req, res) -> {
-                User u = gson.fromJson(req.body(), User.class);
-                User logged = userService.login(u.getUsername(), u.getPassword());
+        post("/login", (req, res) -> {
+    res.type("application/json");
+    try {
+        User u = gson.fromJson(req.body(), User.class);
+        User userFromDb = userService.findByUsername(u.getUsername());
+
+        if (userFromDb == null) {
+            res.status(404);
+            Map<String,String> response = new HashMap<>();
+            response.put("error", "Username tidak ada");
+            return gson.toJson(response);
+        }
+
+        boolean passwordMatch = userService.checkPassword(u.getPassword(), userFromDb.getPassword());
+        if (!passwordMatch) {
+            res.status(401);
+            Map<String,String> response = new HashMap<>();
+            response.put("error", "Salah password");
+            return gson.toJson(response);
+        }
+
+        String token = JwtUtil.generateToken(userFromDb.getUsername(), userFromDb.getRole());
+        userFromDb.setPassword(null);
+
+        Map<String,Object> response = new HashMap<>();
+        response.put("message", "Login berhasil");
+        response.put("token", token);
+        response.put("user", userFromDb);
+
+        return gson.toJson(response);
+
+    } catch (Exception e) {
+        res.status(500);
+        System.err.println("Error POST /api/user/login: " + e.getMessage());
+        Map<String,String> response = new HashMap<>();
+        response.put("error", "Internal server error saat login");
+        return gson.toJson(response);
+    }
+});
+            // RESET PASSWORD (hanya untuk pembeli)
+            post("/reset-password", (req, res) -> {
                 res.type("application/json");
+                try {
+                    // Ambil data dari request body
+                    Map<String, String> body = gson.fromJson(req.body(), Map.class);
+                    String username = body.get("username");
+                    String oldPassword = body.get("oldPassword");
+                    String newPassword = body.get("newPassword");
 
-                if (logged != null) {
-                    String token = JwtUtil.generateToken(logged.getUsername(), logged.getRole());
-                    logged.setPassword(null);
+                    if (username == null || oldPassword == null || newPassword == null) {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Username, password lama, dan password baru harus diisi."));
+                    }
 
-                    return gson.toJson(Map.of(
-                        "message", "Login successful",
-                        "token", token,
-                        "user", logged 
-                    ));
-                } else {
-                    res.status(401);
-                    return gson.toJson(Map.of("error", "Invalid credentials"));
+                    // Ambil user dari DB
+                    User user = userService.findByUsername(username);
+                    if (user == null) {
+                        res.status(404);
+                        return gson.toJson(Map.of("error", "User tidak ditemukan."));
+                    }
+
+                    // Cek role: hanya pembeli yang boleh reset password sendiri
+                    if (!"pembeli".equalsIgnoreCase(user.getRole())) {
+                        res.status(403);
+                        return gson.toJson(Map.of("error", "Hanya pembeli yang dapat melakukan reset password."));
+                    }
+
+                    boolean success = userService.resetPassword(username, oldPassword, newPassword);
+                    if (success) {
+                        res.status(200);
+                        return gson.toJson(Map.of("message", "Password berhasil diubah."));
+                    } else {
+                        res.status(400);
+                        return gson.toJson(Map.of("error", "Password lama tidak cocok."));
+                    }
+                } catch (Exception e) {
+                    res.status(500);
+                    System.err.println("Error POST /api/user/reset-password: " + e.getMessage());
+                    return gson.toJson(Map.of("error", "Internal Server Error saat reset password."));
                 }
             });
-            
             // ===============================================
             // FUNGSI BARU UNTUK PENGELOLAAN USER OLEH ADMIN
             // ===============================================
