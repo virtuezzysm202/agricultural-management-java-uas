@@ -5,6 +5,7 @@ import TopbarManager from "../components/TopbarManager";
 import SidebarManager from "../components/SidebarManager";
 import TableToolbar from "../components/TableToolbar";
 import SimpleModal from "../components/SimpleModal";
+import StatsCard from "../components/StatsCard";
 
 export default function DashboardManager() {
   const navigate = useNavigate();
@@ -317,39 +318,35 @@ export default function DashboardManager() {
         <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Total Lahan
-            </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {totalLahan}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Jenis Tanaman
-            </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {jenisTanaman}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Total Panen (Kg)
-            </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {totalPanenKg.toLocaleString("id-ID")}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-              Total Revenue
-            </p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Rp {totalRevenue.toLocaleString("id-ID")}
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatsCard
+            title="Total Lahan"
+            value={totalLahan}
+            change="-"
+            up={true}
+            icon={<span>🏡</span>}
+          />
+          <StatsCard
+            title="Jenis Tanaman"
+            value={jenisTanaman}
+            change="-"
+            up={true}
+            icon={<span>🌱</span>}
+          />
+          <StatsCard
+            title="Total Panen (kg)"
+            value={totalPanenKg}
+            change="-"
+            up={true}
+            icon={<span>🌾</span>}
+          />
+          <StatsCard
+            title="Total Revenue"
+            value={`Rp ${totalRevenue.toLocaleString("id-ID")}`}
+            change="-"
+            up={true}
+            icon={<span>💰</span>}
+          />
         </div>
 
         {/* Tables Section */}
@@ -370,7 +367,8 @@ export default function DashboardManager() {
         `}</style>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Hasil Panen Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+          <div className="relative bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col overflow-hidden" style={{ width: '100%' }}>
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80 rounded-t-xl" />
             <TableToolbar title="Hasil Panen" onRefresh={loadHarvests} />
             <button
               onClick={() => openEdit("harvest", {
@@ -474,7 +472,8 @@ export default function DashboardManager() {
           </div>
 
           {/* Lahan Tanaman Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+          <div className="relative bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col overflow-hidden" style={{ width: '100%' }}>
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80 rounded-t-xl" />
             <TableToolbar title="Lahan Tanaman" onRefresh={loadLahans} />
             <button
               onClick={() => openEdit("lahan", {
@@ -561,7 +560,8 @@ export default function DashboardManager() {
           </div>
 
           {/* Monitoring Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+          <div className="relative bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col overflow-hidden" style={{ width: '100%' }}>
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80 rounded-t-xl" />
             <TableToolbar title="Monitoring" onRefresh={loadMonitors} />
             <button
               onClick={() => openEdit("monitor", {
@@ -643,7 +643,8 @@ export default function DashboardManager() {
           </div>
 
           {/* Tanaman Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+          <div className="relative bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col overflow-hidden" style={{ width: '100%' }}>
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80 rounded-t-xl" />
             <TableToolbar title="Daftar Tanaman" onRefresh={loadTanamans} />
             <div className="overflow-x-auto custom-scrollbar">
               <div className="max-h-[36rem] overflow-y-auto rounded-md">
@@ -707,7 +708,8 @@ export default function DashboardManager() {
           </div>
 
           {/* Pembelian Table */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col" style={{ borderTop: '4px solid #39FF14', width: '100%' }}>
+          <div className="relative bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 rounded-xl shadow-sm p-4 min-h-[22rem] min-w-[340px] max-w-full h-[420px] flex flex-col overflow-hidden" style={{ width: '100%' }}>
+            <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-sky-400/80 rounded-t-xl" />
             <TableToolbar title="Pembelian" onRefresh={loadPurchases} />
             <div className="overflow-x-auto custom-scrollbar">
               <div className="max-h-[36rem] overflow-y-auto rounded-md">

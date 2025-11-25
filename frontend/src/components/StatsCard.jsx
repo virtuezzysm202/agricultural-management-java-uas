@@ -73,7 +73,7 @@ export default function StatsCard({ title, value, change, up, icon }) {
                 {title}
               </div>
               {/* value: ga kegedean (text-lg) */}
-              <div className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+              <div className="text-lg font-semibold text-gray-900 dark:text-gray-50 break-words">
                 {value}
               </div>
             </div>
