@@ -27,7 +27,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem("token");
 
     // Jika token ada, tambahkan ke header Authorization
-    // Catatan: Endpoint public (login/register) tidak akan punya token, jadi ini aman.
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -83,6 +82,28 @@ export async function register(username, password, role, nama) {
   } catch (error) {
     const errorMessage = error.response?.data || error.message;
     throw new Error(`Registration failed: ${errorMessage}`);
+  }
+}
+
+/**
+ * Register khusus pembeli (role sudah fixed: 'pembeli')
+ * @param {string} username
+ * @param {string} password
+ * @param {string} nama
+ * @returns {Promise<object>}
+ */
+export async function registerPembeli(username, password, nama) {
+  try {
+    const res = await api.post("/user/register", {
+      username,
+      password,
+      role: "pembeli",
+      nama,
+    });
+    return res.data;
+  } catch (error) {
+    const errorMessage = error.response?.data || error.message;
+    throw new Error(`Register pembeli failed: ${errorMessage}`);
   }
 }
 

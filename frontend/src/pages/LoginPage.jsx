@@ -45,32 +45,46 @@ export default function LoginPage() {
             <span className="text-sm text-gray-500 dark:text-gray-400 tracking-wide">Agricultural Management System</span>
           </div>
           <form onSubmit={handleSubmit}>
-            <h1 className="text-xl font-bold mb-4 text-center text-gray-900 dark:text-gray-100">Login</h1>
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 w-full mb-3 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              autoFocus
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 w-full mb-3 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded-md font-semibold shadow-sm transition-colors mt-2"
-            >
-              Login
-            </button>
-            <p className="text-center mt-3 text-sm text-red-600 dark:text-red-400 min-h-[1.5em]">{message}</p>
-          </form>
+  <h1 className="text-xl font-bold mb-4 text-center text-gray-900 dark:text-gray-100">Login</h1>
+
+      <input
+        type="text"
+        placeholder="Username"
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 w-full mb-3 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        autoFocus
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 w-full mb-3 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400"
+      />
+
+      <button
+        type="submit"
+        className="bg-blue-600 hover:bg-blue-700 text-white w-full py-2 rounded-md font-semibold shadow-sm transition-colors mt-2"
+      >
+        Login
+      </button>
+
+      <p className="text-center mt-3 text-sm text-red-600 dark:text-red-400 min-h-[1.5em]">
+        {message}
+      </p>
+
+      {/* Tambah tombol ke halaman register */}
+      <p className="text-center mt-4 text-sm text-gray-700 dark:text-gray-300">
+        Belum punya akun pembeli?{" "}
+        <Link to="/register-pembeli" className="text-blue-600 hover:underline dark:text-blue-400">
+          Daftar di sini
+        </Link>
+      </p>
+    </form>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  );
-}
+      );
+    }
