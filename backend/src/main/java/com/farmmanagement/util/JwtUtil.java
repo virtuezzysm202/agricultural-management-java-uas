@@ -5,8 +5,14 @@ import com.auth0.jwt.algorithms.Algorithm;
 import java.util.Date;
 
 public class JwtUtil {
-    private static final String SECRET_KEY = "your_secret_key_here";
-    private static final long EXPIRATION_TIME = 86400000; // 1 hari (ms)
+
+    // Ambil secret dari environment variable (fallback tetap ada untuk mencegah error)
+    private static final String SECRET_KEY = System.getenv("JWT_SECRET") != null
+            ? System.getenv("JWT_SECRET")
+            : "default_super_long_secure_secret_key_2025";
+
+    private static final long EXPIRATION_TIME = 3600000; // 1 jam
+
 
     public static String generateToken(String username, String role) {
         return JWT.create()
@@ -19,7 +25,9 @@ public class JwtUtil {
 
     public static boolean verifyToken(String token) {
         try {
-            JWT.require(Algorithm.HMAC256(SECRET_KEY)).build().verify(token);
+            JWT.require(Algorithm.HMAC256(SECRET_KEY))
+               .build()
+               .verify(token);
             return true;
         } catch (Exception e) {
             return false;
