@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import SidebarAdmin from "../components/SidebarAdmin";
 import TopbarAdmin from "../components/TopbarAdmin";
 import api from "../services/api";
@@ -8,18 +8,26 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+// Konstanta untuk batasan paginasi
+const ITEMS_PER_PAGE = 5;
+
 export default function LahanPage() {
   const [lahan, setLahan] = useState([]);
   const [manajerList, setManajerList] = useState([]);
   const [form, setForm] = useState({
     id_lahan: null,
     nama_lahan: "",
-    luas: "",
+    luas: "", // Gunakan string untuk kemudahan input form
     lokasi: "",
-    id_pengawas: "",
+    id_pengawas: "", // Gunakan string untuk kemudahan input select form
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState({}); // State untuk error validasi form
+
+  // State untuk Pencarian dan Paginasi
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLahan = async () => {
     try {
@@ -27,15 +35,18 @@ export default function LahanPage() {
       setLahan(res.data);
     } catch (err) {
       console.error("Gagal memuat data lahan:", err);
+      alert("Gagal memuat data lahan. Cek konsol untuk detail error.");
     }
   };
 
   const fetchPengawas = async () => {
     try {
+      // Pastikan API endpoint untuk mengambil manajer/pengawas sudah benar
       const res = await api.get("/user/manajer");
       setManajerList(res.data);
     } catch (err) {
       console.error("Gagal memuat data pengawas:", err);
+      alert("Gagal memuat data pengawas. Cek konsol untuk detail error.");
     }
   };
 
@@ -44,35 +55,100 @@ export default function LahanPage() {
     fetchPengawas();
   }, []);
 
+  // --- Fungsi Validasi Form ---
+  const validateForm = () => {
+    let errors = {};
+    let isValid = true;
+
+    if (!form.nama_lahan.trim()) {
+      errors.nama_lahan = "Nama Lahan wajib diisi.";
+      isValid = false;
+    }
+    if (form.luas === "" || form.luas === null) {
+      errors.luas = "Luas (Ha) wajib diisi.";
+      isValid = false;
+    } else if (Number(form.luas) <= 0) {
+      errors.luas = "Luas harus lebih dari 0.";
+      isValid = false;
+    } else if (isNaN(Number(form.luas))) {
+      errors.luas = "Luas harus berupa angka yang valid.";
+      isValid = false;
+    }
+    if (!form.lokasi.trim()) {
+      errors.lokasi = "Lokasi wajib diisi.";
+      isValid = false;
+    }
+    if (!form.id_pengawas) {
+      errors.id_pengawas = "Pengawas wajib dipilih.";
+      isValid = false;
+    }
+
+    setError(errors);
+    return isValid;
+  };
+  // -----------------------------
+
   const handleChange = (e) => {
     const { name, value, type } = e.target;
-    const newValue = type === "number" ? parseFloat(value) : value;
+    // Mengubah nilai menjadi float hanya jika type adalah number dan value bukan string kosong,
+    // namun kita simpan sebagai string di state agar input terkontrol dengan baik.
+    const newValue = value;
     setForm({ ...form, [name]: newValue });
+    // Hapus error saat input diubah
+    setError({ ...error, [name]: "" });
+  };
+
+  const resetForm = () => {
+    setForm({
+      id_lahan: null,
+      nama_lahan: "",
+      luas: "",
+      lokasi: "",
+      id_pengawas: "",
+    });
+    setIsEditing(false);
+    setError({}); // Reset error juga
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      alert(
+        "Ada data yang belum diisi atau tidak valid. Silakan periksa kembali."
+      );
+      return;
+    }
+
     setLoading(true);
     try {
+      const dataToSubmit = {
+        ...form,
+        // Konversi luas ke number/float sebelum dikirim ke API
+        luas: parseFloat(form.luas),
+        // Konversi id_pengawas ke number/integer karena biasanya foreign key
+        id_pengawas: Number(form.id_pengawas),
+      };
+
       if (isEditing) {
-        const dataToSubmit = { ...form };
         delete dataToSubmit.id_lahan;
         await api.put(`/lahan/${form.id_lahan}`, dataToSubmit);
       } else {
-        await api.post("/lahan", form);
+        delete dataToSubmit.id_lahan; // Pastikan id_lahan tidak dikirim saat POST
+        await api.post("/lahan", dataToSubmit);
       }
       fetchLahan();
-      setForm({
-        id_lahan: null,
-        nama_lahan: "",
-        luas: "",
-        lokasi: "",
-        id_pengawas: "",
-      });
-      setIsEditing(false);
+      resetForm();
     } catch (err) {
-      console.error("Gagal menyimpan data:", err);
-      alert("Gagal menyimpan data. Cek konsol untuk detail error.");
+      console.error(
+        "Gagal menyimpan data:",
+        err.response ? err.response.data : err.message
+      );
+      alert(
+        `Gagal menyimpan data. Cek konsol untuk detail error. Pesan: ${
+          err.response?.data?.message || err.message
+        }`
+      );
     } finally {
       setLoading(false);
     }
@@ -81,10 +157,12 @@ export default function LahanPage() {
   const handleEdit = (data) => {
     setForm({
       ...data,
+      // Pastikan luas dan id_pengawas diubah ke string agar cocok dengan input form
       luas: String(data.luas),
       id_pengawas: String(data.id_pengawas),
     });
     setIsEditing(true);
+    setError({}); // Reset error saat mulai mengedit
   };
 
   const handleDelete = async (id) => {
@@ -93,14 +171,62 @@ export default function LahanPage() {
       await api.delete(`/lahan/${id}`);
       fetchLahan();
     } catch (err) {
-      console.error("Gagal menghapus data:", err);
+      console.error(
+        "Gagal menghapus data:",
+        err.response ? err.response.data : err.message
+      );
+      alert(
+        `Gagal menghapus data. Cek konsol untuk detail error. Pesan: ${
+          err.response?.data?.message || err.message
+        }`
+      );
     }
   };
 
+  // --- Logika Pencarian dan Paginasi ---
+  const getPengawasName = (id_pengawas) => {
+    const pengawas = manajerList.find((p) => p.id_user === id_pengawas);
+    return pengawas ? pengawas.nama : "Tidak Diketahui";
+  };
+
+  const filteredLahan = useMemo(() => {
+    if (!searchTerm) {
+      return lahan;
+    }
+    const lowerCaseSearchTerm = searchTerm.toLowerCase();
+    return lahan.filter(
+      (l) =>
+        l.nama_lahan.toLowerCase().includes(lowerCaseSearchTerm) ||
+        l.lokasi.toLowerCase().includes(lowerCaseSearchTerm) ||
+        String(l.id_lahan).includes(lowerCaseSearchTerm) ||
+        getPengawasName(l.id_pengawas)
+          .toLowerCase()
+          .includes(lowerCaseSearchTerm)
+    );
+  }, [lahan, searchTerm, manajerList]); // Dependensi manajerList ditambahkan untuk pencarian nama pengawas
+
+  const totalPages = Math.ceil(filteredLahan.length / ITEMS_PER_PAGE);
+
+  const paginatedLahan = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredLahan.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredLahan, currentPage]);
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset ke halaman 1 saat melakukan pencarian baru
+  };
+
+  const goToPage = (page) => {
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+  // ----------------------------------------
+
   const getChartData = () => {
     const luasByPengawas = lahan.reduce((acc, l) => {
-      const pengawas = manajerList.find((p) => p.id_user === l.id_pengawas);
-      const nama = pengawas ? pengawas.nama : `Pengawas ID ${l.id_pengawas}`;
+      const nama = getPengawasName(l.id_pengawas);
       const luas = l.luas || 0;
       acc[nama] = (acc[nama] || 0) + luas;
       return acc;
@@ -151,6 +277,8 @@ export default function LahanPage() {
             </p>
           </div>
 
+          <hr className="border-gray-200 dark:border-gray-800" />
+
           {/* FORM + CHART */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* FORM CARD */}
@@ -173,6 +301,7 @@ export default function LahanPage() {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Nama Lahan */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                       Nama Lahan
@@ -182,12 +311,22 @@ export default function LahanPage() {
                       name="nama_lahan"
                       value={form.nama_lahan}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      className={`w-full rounded-xl border ${
+                        error.nama_lahan
+                          ? "border-red-400 focus:ring-red-100"
+                          : "border-gray-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      } bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500 transition-colors`}
                       required
                       placeholder="Contoh: Lahan A1, Lahan Utara..."
                     />
+                    {error.nama_lahan && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {error.nama_lahan}
+                      </p>
+                    )}
                   </div>
 
+                  {/* Luas */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                       Luas (Ha)
@@ -198,11 +337,21 @@ export default function LahanPage() {
                       name="luas"
                       value={form.luas}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      className={`w-full rounded-xl border ${
+                        error.luas
+                          ? "border-red-400 focus:ring-red-100"
+                          : "border-gray-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      } bg-gray-50 px-3 py-2.5 text-sm text-gray-900 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 transition-colors`}
                       required
+                      min="0"
+                      placeholder="Contoh: 5.50"
                     />
+                    {error.luas && (
+                      <p className="text-xs text-red-500 mt-1">{error.luas}</p>
+                    )}
                   </div>
 
+                  {/* Lokasi */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                       Lokasi
@@ -212,12 +361,22 @@ export default function LahanPage() {
                       name="lokasi"
                       value={form.lokasi}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500"
+                      className={`w-full rounded-xl border ${
+                        error.lokasi
+                          ? "border-red-400 focus:ring-red-100"
+                          : "border-gray-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      } bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500 transition-colors`}
                       required
                       placeholder="Contoh: Desa Cibodas, Blok 3..."
                     />
+                    {error.lokasi && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {error.lokasi}
+                      </p>
+                    )}
                   </div>
 
+                  {/* Pengawas */}
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                       Pengawas
@@ -226,7 +385,11 @@ export default function LahanPage() {
                       name="id_pengawas"
                       value={form.id_pengawas}
                       onChange={handleChange}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-900 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100"
+                      className={`w-full rounded-xl border ${
+                        error.id_pengawas
+                          ? "border-red-400 focus:ring-red-100"
+                          : "border-gray-200 focus:border-emerald-400 focus:ring-emerald-100"
+                      } bg-gray-50 px-3 py-2.5 text-sm text-gray-900 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 transition-colors`}
                       required
                     >
                       <option value="">Pilih Pengawas</option>
@@ -236,6 +399,11 @@ export default function LahanPage() {
                         </option>
                       ))}
                     </select>
+                    {error.id_pengawas && (
+                      <p className="text-xs text-red-500 mt-1">
+                        {error.id_pengawas}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex gap-2 pt-2">
@@ -244,21 +412,40 @@ export default function LahanPage() {
                       disabled={loading}
                       className="flex-1 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60 transition-colors"
                     >
-                      {isEditing ? "Simpan Perubahan" : "Tambah Lahan"}
+                      {loading ? (
+                        <>
+                          <svg
+                            className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Memproses...
+                        </>
+                      ) : isEditing ? (
+                        "Simpan Perubahan"
+                      ) : (
+                        "Tambah Lahan"
+                      )}
                     </button>
                     {isEditing && (
                       <button
                         type="button"
-                        onClick={() => {
-                          setForm({
-                            id_lahan: null,
-                            nama_lahan: "",
-                            luas: "",
-                            lokasi: "",
-                            id_pengawas: "",
-                          });
-                          setIsEditing(false);
-                        }}
+                        onClick={resetForm}
                         className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                       >
                         Batal
@@ -298,11 +485,25 @@ export default function LahanPage() {
             </div>
           </div>
 
+          <hr className="border-gray-200 dark:border-gray-800" />
+
           {/* TABEL LAHAN */}
           <section className="space-y-3 mb-10">
             <h3 className="text-base md:text-lg font-semibold text-gray-900 dark:text-gray-50">
               Tabel Data Lahan
             </h3>
+
+            {/* Search Input */}
+            <div className="flex justify-end mb-4">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={handleSearchChange}
+                placeholder="Cari (Nama/Lokasi/Pengawas)..."
+                className="w-full max-w-xs rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500 transition-colors"
+              />
+            </div>
+
             <div className="overflow-auto bg-white/95 dark:bg-gray-950/80 rounded-2xl border border-gray-200/80 dark:border-gray-800/80 shadow-sm">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800 text-sm">
                 <thead className="bg-gray-50/90 dark:bg-gray-900/80 sticky top-0 z-10">
@@ -316,11 +517,8 @@ export default function LahanPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {lahan.map((l) => {
-                    const pengawas = manajerList.find(
-                      (p) => p.id_user === l.id_pengawas
-                    );
-                    const namaPengawas = pengawas ? pengawas.nama : "Tidak Diketahui";
+                  {paginatedLahan.map((l) => {
+                    const namaPengawas = getPengawasName(l.id_pengawas);
 
                     return (
                       <tr
@@ -351,19 +549,107 @@ export default function LahanPage() {
                       </tr>
                     );
                   })}
-                  {lahan.length === 0 && (
+                  {paginatedLahan.length === 0 && (
                     <tr>
                       <td
                         colSpan="6"
                         className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
-                        Tidak ada data lahan.
+                        {searchTerm
+                          ? "Tidak ada lahan yang cocok dengan pencarian."
+                          : "Tidak ada data lahan."}
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {filteredLahan.length > ITEMS_PER_PAGE && (
+              <div className="flex justify-between items-center px-4 py-3 sm:px-6">
+                <div className="text-sm text-gray-700 dark:text-gray-400">
+                  Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} sampai{" "}
+                  {Math.min(currentPage * ITEMS_PER_PAGE, filteredLahan.length)}{" "}
+                  dari {filteredLahan.length} hasil{" "}
+                  {searchTerm && `(Total: ${lahan.length} data)`}
+                </div>
+                <nav
+                  className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                  aria-label="Pagination"
+                >
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">Previous</span>
+                    {/* Heroicon: chevron-left */}
+                    <svg
+                      className="h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M12.79 5.23a.75.75 0 01-.02 1.06L9.46 10l3.31 3.71a.75.75 0 11-1.08 1.02l-3.75-4.25a.75.75 0 010-1.02l3.75-4.25a.75.75 0 011.08 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Tampilkan halaman aktif dan sekitar */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) =>
+                      // Tampilkan hanya 2 halaman sebelum dan 2 halaman sesudah, atau halaman pertama/terakhir
+                      (page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 &&
+                          page <= currentPage + 1)) && (
+                        <button
+                          key={page}
+                          onClick={() => goToPage(page)}
+                          aria-current={
+                            page === currentPage ? "page" : undefined
+                          }
+                          className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 
+                          ${
+                            page === currentPage
+                              ? "bg-emerald-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                              : "bg-white border border-gray-300 text-gray-900 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      )
+                  )}
+
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    className="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 focus:z-20 disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700"
+                  >
+                    <span className="sr-only">Next</span>
+                    {/* Heroicon: chevron-right */}
+                    <svg
+                      className="h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.21 14.77a.75.75 0 01.02-1.06L10.54 10 7.23 6.29a.75.75 0 111.08-1.02l3.75 4.25a.75.75 0 010 1.02l-3.75 4.25a.75.75 0 01-1.08 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                </nav>
+              </div>
+            )}
           </section>
         </main>
       </div>
