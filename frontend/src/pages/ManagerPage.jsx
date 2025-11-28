@@ -5,6 +5,7 @@ import api from "../services/api";
 
 // Konstanta untuk batasan paginasi
 const ITEMS_PER_PAGE = 5;
+
 export default function ManagerPage() {
   const [manajer, setManajer] = useState([]);
   const [form, setForm] = useState({
@@ -16,7 +17,8 @@ export default function ManagerPage() {
   });
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState({}); // State untuk error validasi form
+  const [error, setError] = useState({}); // State untuk error validasi form per field
+  const [alertMessage, setAlertMessage] = useState(null); // State baru untuk pesan notifikasi umum
 
   // State untuk Pencarian dan Paginasi
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,7 +74,9 @@ export default function ManagerPage() {
       setManajer(res.data);
     } catch (err) {
       console.error("Gagal memuat data manajer:", err);
-      alert("Gagal memuat data manajer. Cek konsol untuk detail error.");
+      setAlertMessage(
+        "Gagal memuat data manajer. Cek konsol untuk detail error."
+      );
     }
   };
 
@@ -85,6 +89,7 @@ export default function ManagerPage() {
     setForm({ ...form, [name]: value });
     // Hapus error saat input diubah
     setError({ ...error, [name]: "" });
+    setAlertMessage(null); // Clear general alert on input change
   };
 
   const resetForm = () => {
@@ -97,19 +102,23 @@ export default function ManagerPage() {
     });
     setIsEditing(false);
     setError({});
+    setAlertMessage(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
-      alert(
+      setAlertMessage(
         "Ada data yang belum diisi atau tidak valid. Silakan periksa kembali."
       );
       return;
     }
 
     setLoading(true);
+    setAlertMessage(null); // Reset pesan alert sebelum submit
+    setError({}); // Reset error field
+
     try {
       if (isEditing) {
         // Mode Edit
@@ -120,6 +129,7 @@ export default function ManagerPage() {
           ...(form.password && { password: form.password }),
         };
         await api.put(`${USER_ENDPOINT}/${form.id_user}`, dataToSubmit);
+        setAlertMessage("Manajer berhasil diperbarui!");
       } else {
         // Mode Tambah Baru
         const { username, password, role, nama } = form;
@@ -129,6 +139,7 @@ export default function ManagerPage() {
           role,
           nama,
         });
+        setAlertMessage("Manajer baru berhasil ditambahkan!");
       }
       fetchPengawas();
       resetForm();
@@ -137,9 +148,31 @@ export default function ManagerPage() {
         "Gagal menyimpan data:",
         err.response ? err.response.data : err.message
       );
-      // Menampilkan pesan error spesifik dari API jika ada (misalnya username sudah ada)
-      const apiErrorMsg = err.response?.data?.message || err.message;
-      alert(`Gagal menyimpan data. Pesan: ${apiErrorMsg}`);
+
+      const resData = err.response?.data;
+      const apiErrorMsg = resData?.message || err.message;
+      const statusCode = err.response?.status;
+
+      // Logika khusus untuk error duplikat username (biasanya 409 Conflict atau 400 Bad Request)
+      // Asumsi: API mengembalikan pesan yang jelas tentang duplikasi username
+      if (statusCode === 400 || statusCode === 409) {
+        // Coba mendeteksi pesan spesifik duplikasi username (tergantung respons backend Anda)
+        if (apiErrorMsg.toLowerCase().includes("username")) {
+          setError({ ...error, username: apiErrorMsg });
+          setAlertMessage(
+            `Gagal menambahkan manajer. username sudah digunakan.`
+          );
+        } else {
+          setAlertMessage(
+            `Gagal menyimpan data. Pesan: username sudah digunakan`
+          );
+        }
+      } else {
+        // Pesan error umum/lainnya (misalnya 500 Internal Server Error)
+        setAlertMessage(
+          `Gagal menyimpan data. Pesan: ${apiErrorMsg} atau username sudah digunakan`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -155,6 +188,7 @@ export default function ManagerPage() {
     });
     setIsEditing(true);
     setError({}); // Reset error saat mulai mengedit
+    setAlertMessage(null); // Reset alert
   };
 
   const handleDelete = async (id) => {
@@ -162,13 +196,14 @@ export default function ManagerPage() {
     try {
       await api.delete(`${USER_ENDPOINT}/${id}`);
       fetchPengawas();
+      setAlertMessage("Manajer berhasil dihapus.");
     } catch (err) {
       console.error(
         "Gagal menghapus data:",
         err.response ? err.response.data : err.message
       );
       const apiErrorMsg = err.response?.data?.message || err.message;
-      alert(
+      setAlertMessage(
         `Gagal menghapus data. Pesan: ${apiErrorMsg}. Pastikan tidak ada Lahan yang terhubung.`
       );
     }
@@ -251,6 +286,20 @@ export default function ManagerPage() {
                   </p>
                 </div>
 
+                {/* --- Pesan Alert/Notifikasi --- */}
+                {alertMessage && (
+                  <div
+                    className={`p-3 rounded-xl text-sm font-medium ${
+                      alertMessage.includes("berhasil")
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                        : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                    }`}
+                  >
+                    {alertMessage}
+                  </div>
+                )}
+                {/* ------------------------------- */}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Nama Lengkap */}
                   <div>
@@ -285,7 +334,7 @@ export default function ManagerPage() {
                       value={form.username}
                       onChange={handleChange}
                       className={`w-full rounded-xl border ${
-                        error.username
+                        error.username // Menampilkan error spesifik dari backend (duplikat username)
                           ? "border-red-400 focus:ring-red-100"
                           : "border-gray-200 focus:border-emerald-400 focus:ring-emerald-100"
                       } bg-gray-50 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-100 dark:placeholder-gray-500 transition-colors`}
@@ -500,11 +549,11 @@ export default function ManagerPage() {
                               page === currentPage ? "page" : undefined
                             }
                             className={`relative z-10 inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 
-                                            ${
-                                              page === currentPage
-                                                ? "bg-emerald-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
-                                                : "bg-white border border-gray-300 text-gray-900 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
-                                            }`}
+                                              ${
+                                                page === currentPage
+                                                  ? "bg-emerald-600 text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+                                                  : "bg-white border border-gray-300 text-gray-900 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700"
+                                              }`}
                           >
                             {page}
                           </button>
