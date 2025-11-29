@@ -425,7 +425,7 @@ export default function DashboardManager() {
                           <td className="px-3 py-2">{h.id_lahan}</td>
                           <td className="px-3 py-2">{h.kuantitas} kg</td>
                           <td className="px-3 py-2">{h.kualitas}</td>
-                          <td className="px-3 py-2 text-center">
+                          <td className="px-3 py-2 text-center capitalize">
                             <span
                               className={`px-2 py-1 rounded-full text-xs whitespace-nowrap max-w-[120px] overflow-hidden text-ellipsis ${
                                 h.status === "Siap Dijual"
@@ -529,7 +529,7 @@ export default function DashboardManager() {
                         <td className="px-3 py-2">{l.id_tanaman}</td>
                         <td className="px-3 py-2">{l.jumlah_tanaman || 0} crops</td>
                         <td className="px-3 py-2">{l.tanggal_tanam}</td>
-                        <td className="px-3 py-2">
+                        <td className="px-3 py-2 capitalize">
                           <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                             {l.status}
                           </span>
@@ -678,7 +678,7 @@ export default function DashboardManager() {
                         className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                       >
                         <td className="px-3 py-2">{t.id_tanaman}</td>
-                        <td className="px-3 py-2">{t.nama_tanaman}</td>
+                        <td className="px-3 py-2 capitalize">{t.nama_tanaman}</td>
                         <td className="px-3 py-2">{t.jenis}</td>
                         <td className="px-3 py-2">{t.jumlah_tanaman || 0}</td>
                         <td className="px-3 py-2">
@@ -757,7 +757,7 @@ export default function DashboardManager() {
                           <td className="px-3 py-2">
                             Rp {p.total_harga.toLocaleString("id-ID")}
                           </td>
-                          <td className="px-3 py-2">
+                          <td className="px-3 py-2 capitalize">
                             <span
                               className={`px-2 py-1 rounded-full text-xs ${
                                 p.status === "Diterima"
