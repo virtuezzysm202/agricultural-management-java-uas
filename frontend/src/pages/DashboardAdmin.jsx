@@ -466,7 +466,7 @@ export default function DashboardAdmin() {
                       <td className="px-4 py-3 text-right">
                         Rp {h.harga_satuan}
                       </td>
-                      <td className="px-4 py-3">{h.status}</td>
+                      <td className="px-4 py-3 capitalize">{h.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
                         <button
                           onClick={() => openEdit("harvest", h)}
@@ -529,7 +529,7 @@ export default function DashboardAdmin() {
                       <td className="px-4 py-3">{l.id_lahan}</td>
                       <td className="px-4 py-3">{l.id_tanaman}</td>
                       <td className="px-4 py-3">{l.tanggal_tanam}</td>
-                      <td className="px-4 py-3">{l.status}</td>
+                      <td className="px-4 py-3 capitalize">{l.status}</td>
                       <td className="px-4 py-3 text-center space-x-2">
                         <button
                           onClick={() => openEdit("lahan", l)}
