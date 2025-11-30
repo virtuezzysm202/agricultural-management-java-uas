@@ -212,6 +212,9 @@ export default function DashboardBuyer() {
   // Search state
   const [searchPembelian, setSearchPembelian] = useState("");
   const [searchPanen, setSearchPanen] = useState("");
+  const handleSidebarTab = (tab) => setActiveTab(tab);
+
+
 
   // ======= FETCH FUNCTIONS =======
   const loadPurchases = async () => {
@@ -337,7 +340,7 @@ export default function DashboardBuyer() {
   // ======= RENDER =======
   return (
     <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
-      <SidebarBuyer />
+      <SidebarBuyer onTabChange={handleSidebarTab} activeTab={activeTab}/>
       <div className="flex-1 xl:ml-[260px]">
         <TopbarBuyer />
         <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">

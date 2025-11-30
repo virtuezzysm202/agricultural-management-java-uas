@@ -832,10 +832,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">ID Tanaman</label>
                   <input
                     type="number"
-                    value={current.id_tanaman || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, id_tanaman: +e.target.value })
-                    }
+                    value={current.id_tanaman ?? ""}
+                    onChange={e => setCurrent({ ...current, id_tanaman: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -843,10 +841,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">ID Lahan</label>
                   <input
                     type="number"
-                    value={current.id_lahan || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, id_lahan: +e.target.value })
-                    }
+                    value={current.id_lahan ?? ""}
+                    onChange={e => setCurrent({ ...current, id_lahan: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -864,10 +860,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">Kuantitas (kg)</label>
                   <input
                     type="number"
-                    value={current.kuantitas || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, kuantitas: +e.target.value })
-                    }
+                    value={current.kuantitas ?? ""}
+                    onChange={e => setCurrent({ ...current, kuantitas: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -889,10 +883,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">Harga Satuan</label>
                   <input
                     type="number"
-                    value={current.harga_satuan || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, harga_satuan: +e.target.value })
-                    }
+                    value={current.harga_satuan ?? ""}
+                    onChange={e => setCurrent({ ...current, harga_satuan: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -930,10 +922,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">ID Lahan</label>
                   <input
                     type="number"
-                    value={current.id_lahan || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, id_lahan: +e.target.value })
-                    }
+                    value={current.id_lahan ?? ""}
+                    onChange={e => setCurrent({ ...current, id_lahan: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -941,10 +931,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">ID Tanaman</label>
                   <input
                     type="number"
-                    value={current.id_tanaman || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, id_tanaman: +e.target.value })
-                    }
+                    value={current.id_tanaman ?? ""}
+                    onChange={e => setCurrent({ ...current, id_tanaman: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -962,10 +950,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">Jumlah Tanaman</label>
                   <input
                     type="number"
-                    value={current.jumlah_tanaman || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, jumlah_tanaman: +e.target.value })
-                    }
+                    value={current.jumlah_tanaman ?? ""}
+                    onChange={e => setCurrent({ ...current, jumlah_tanaman: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -1015,10 +1001,8 @@ export default function DashboardManager() {
                   <input
                     type="number"
                     step="0.1"
-                    value={current.suhu || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, suhu: +e.target.value })
-                    }
+                    value={current.suhu ?? ""}
+                    onChange={e => setCurrent({ ...current, suhu: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -1027,10 +1011,8 @@ export default function DashboardManager() {
                   <input
                     type="number"
                     step="0.1"
-                    value={current.kelembaban || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, kelembaban: +e.target.value })
-                    }
+                    value={current.kelembaban ?? ""}
+                    onChange={e => setCurrent({ ...current, kelembaban: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -1054,10 +1036,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">Jumlah</label>
                   <input
                     type="number"
-                    value={current.jumlah || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, jumlah: +e.target.value })
-                    }
+                    value={current.jumlah ?? ""}
+                    onChange={e => setCurrent({ ...current, jumlah: e.target.value === "" ? undefined : parseInt(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -1065,10 +1045,8 @@ export default function DashboardManager() {
                   <label className="block text-sm mb-1">Total Harga</label>
                   <input
                     type="number"
-                    value={current.total_harga || 0}
-                    onChange={(e) =>
-                      setCurrent({ ...current, total_harga: +e.target.value })
-                    }
+                    value={current.total_harga ?? ""}
+                    onChange={e => setCurrent({ ...current, total_harga: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
                   />
                 </div>
