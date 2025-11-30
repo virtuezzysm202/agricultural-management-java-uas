@@ -83,6 +83,7 @@ public class UserController {
                 res.type("application/json");
                 try {
                     // Ambil data dari request body
+                    @SuppressWarnings("unchecked")
                     Map<String, String> body = gson.fromJson(req.body(), Map.class);
                     String username = body.get("username");
                     String oldPassword = body.get("oldPassword");
