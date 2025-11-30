@@ -4,6 +4,7 @@ import api from "../services/api";
 import TopbarBuyer from "../components/TopbarBuyer";
 import SidebarBuyer from "../components/SidebarBuyer";
 import TableToolbar from "../components/TableToolbar";
+import StatsCard from "../components/StatsCard";
 
 // Modal sederhana untuk pembelian
 function PurchaseModal({ open, onClose, onSubmit, availableHarvests, currentUser }) {
@@ -338,29 +339,42 @@ export default function DashboardBuyer() {
 
   // ======= RENDER =======
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100">
-      <SidebarBuyer onTabChange={handleSidebarTab} activeTab={activeTab}/>
-      <TopbarBuyer />
-      <main className="ml-[260px] p-4 md:p-6 space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Pembelian</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{totalPurchases}</p>
+    <div className="min-h-screen xl:flex bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
+      <SidebarBuyer />
+      <div className="flex-1 xl:ml-[260px]">
+        <TopbarBuyer />
+        <main className="max-w-7xl mx-auto px-4 py-6 md:px-6 lg:px-8 lg:py-8 space-y-8">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatsCard
+              title="Total Pembelian"
+              value={totalPurchases}
+              change="-"
+              up={true}
+              icon={<span>🛒</span>}
+            />
+            <StatsCard
+              title="Total Pengeluaran"
+              value={`Rp ${totalSpent.toLocaleString("id-ID")}`}
+              change="-"
+              up={false}
+              icon={<span>💰</span>}
+            />
+            <StatsCard
+              title="Total Kg Dibeli"
+              value={totalKgPurchased.toLocaleString("id-ID")}
+              change="-"
+              up={true}
+              icon={<span>⚖️</span>}
+            />
+            <StatsCard
+              title="Produk Tersedia"
+              value={availableProducts}
+              change="-"
+              up={true}
+              icon={<span>📦</span>}
+            />
           </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Pengeluaran</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">Rp {totalSpent.toLocaleString("id-ID")}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Kg Dibeli</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{totalKgPurchased.toLocaleString("id-ID")}</p>
-          </div>
-          <div className="bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800/80 p-5 rounded-xl shadow-sm">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Produk Tersedia</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{availableProducts}</p>
-          </div>
-        </div>
 
         {/* Tabs for section navigation */}
         <div className="flex items-center gap-2 mt-2 mb-4">
@@ -510,37 +524,52 @@ export default function DashboardBuyer() {
           )}
         </div>
 
-        {/* Additional Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-          <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <span className="text-2xl">📊</span>
-              Statistik Pembelian
-            </h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Rata-rata per Transaksi:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Rp {totalPurchases > 0 ? (totalSpent / totalPurchases).toLocaleString("id-ID", { maximumFractionDigits: 0 }) : 0}</span>
+          {/* Additional Info Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:border-gray-800/80 dark:bg-gray-950/80 shadow-[0_14px_40px_rgba(15,23,42,0.45)] p-6">
+              <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-blue-400/80 via-cyan-300/80 to-sky-400/80 rounded-t-2xl" />
+              <div className="pointer-events-none absolute inset-0 opacity-45">
+                <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-blue-500/12 blur-2xl" />
+                <div className="absolute -bottom-14 -left-12 h-28 w-28 rounded-full bg-cyan-400/10 blur-3xl" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-gray-400">Rata-rata Kg per Transaksi:</span>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">{totalPurchases > 0 ? (totalKgPurchased / totalPurchases).toFixed(2) : 0} kg</span>
+              <div className="relative">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">📊</span>
+                  Statistik Pembelian
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Rata-rata per Transaksi:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">Rp {totalPurchases > 0 ? (totalSpent / totalPurchases).toLocaleString("id-ID", { maximumFractionDigits: 0 }) : 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 dark:text-gray-400">Rata-rata Kg per Transaksi:</span>
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">{totalPurchases > 0 ? (totalKgPurchased / totalPurchases).toFixed(2) : 0} kg</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="relative overflow-hidden rounded-2xl border border-gray-200/80 bg-white/95 dark:border-gray-800/80 dark:bg-gray-950/80 shadow-[0_14px_40px_rgba(15,23,42,0.45)] p-6">
+              <div className="absolute left-0 right-0 top-0 h-[2px] bg-gradient-to-r from-emerald-400/80 via-lime-300/80 to-green-400/80 rounded-t-2xl" />
+              <div className="pointer-events-none absolute inset-0 opacity-45">
+                <div className="absolute -top-10 -right-8 h-24 w-24 rounded-full bg-emerald-500/12 blur-2xl" />
+                <div className="absolute -bottom-14 -left-12 h-28 w-28 rounded-full bg-lime-400/10 blur-3xl" />
+              </div>
+              <div className="relative">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                  <span className="text-2xl">💡</span>
+                  Tips Pembelian
+                </h3>
+                <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Pilih produk dengan kualitas A untuk hasil terbaik</span></li>
+                  <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Periksa tanggal panen untuk kesegaran produk</span></li>
+                  <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Hubungi manajer untuk pemesanan dalam jumlah besar</span></li>
+                </ul>
               </div>
             </div>
           </div>
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200/50 dark:border-green-800/50 rounded-xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
-              <span className="text-2xl">💡</span>
-              Tips Pembelian
-            </h3>
-            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-              <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Pilih produk dengan kualitas A untuk hasil terbaik</span></li>
-              <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Periksa tanggal panen untuk kesegaran produk</span></li>
-              <li className="flex items-start gap-2"><span className="text-green-600 dark:text-green-400">✓</span><span>Hubungi manajer untuk pemesanan dalam jumlah besar</span></li>
-            </ul>
-          </div>
-        </div>
-      </main>
+        </main>
+      </div>
       {/* Purchase Modal */}
       <PurchaseModal
         open={purchaseModalOpen}

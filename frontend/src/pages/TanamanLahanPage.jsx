@@ -446,14 +446,14 @@ export default function TanamanLahanPage() {
                   >
                     <td className="px-4 py-3 text-sm">{tl.id_tl}</td>
                     <td className="px-4 py-3 text-sm">{getLahanName(tl.id_lahan)}</td>
-                    <td className="px-4 py-3 text-sm">{getTanamanName(tl.id_tanaman)}</td>
+                    <td className="px-4 py-3 text-sm capitalize">{getTanamanName(tl.id_tanaman)}</td>
                     <td className="px-4 py-3 text-sm">{tl.jumlah_tanaman || 0} crops</td>
                     <td className="px-4 py-3 text-sm">
                       {tl.tanggal_tanam
                         ? new Date(tl.tanggal_tanam).toLocaleDateString("id-ID")
                         : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-4 py-3 text-sm capitalize">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           tl.status === "panen"

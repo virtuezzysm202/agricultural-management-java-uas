@@ -107,7 +107,7 @@ export default function DaftarTanamanPage() {
                     filteredTanamans.map((t) => (
                       <tr key={t.id_tanaman}>
                         <td className="px-4 py-3 text-sm">{t.id_tanaman}</td>
-                        <td className="px-4 py-3 text-sm">{t.nama_tanaman}</td>
+                        <td className="px-4 py-3 text-sm capitalize">{t.nama_tanaman}</td>
                         <td className="px-4 py-3 text-sm">{t.jenis}</td>
                         <td className="px-4 py-3 text-sm">{t.jumlah_tanaman || 0}</td>
                         <td className="px-4 py-3 text-sm">

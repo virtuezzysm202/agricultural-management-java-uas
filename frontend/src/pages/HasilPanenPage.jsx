@@ -559,7 +559,7 @@ export default function HasilPanenPage() {
                     <td className="px-4 py-3 text-sm">
                       Rp {hp.harga_satuan?.toLocaleString("id-ID")}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-4 py-3 text-sm capitalize">
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           hp.status === "Siap Dijual"
