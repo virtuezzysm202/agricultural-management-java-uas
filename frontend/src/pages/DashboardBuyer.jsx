@@ -211,6 +211,9 @@ export default function DashboardBuyer() {
   // Search state
   const [searchPembelian, setSearchPembelian] = useState("");
   const [searchPanen, setSearchPanen] = useState("");
+  const handleSidebarTab = (tab) => setActiveTab(tab);
+
+
 
   // ======= FETCH FUNCTIONS =======
   const loadPurchases = async () => {
@@ -336,7 +339,7 @@ export default function DashboardBuyer() {
   // ======= RENDER =======
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 text-gray-900 dark:text-gray-100">
-      <SidebarBuyer />
+      <SidebarBuyer onTabChange={handleSidebarTab} activeTab={activeTab}/>
       <TopbarBuyer />
       <main className="ml-[260px] p-4 md:p-6 space-y-6">
         {/* Stats Cards */}
